@@ -2,6 +2,11 @@ import { main, suspend } from "effection";
 import { createNewBatcher, FileStorage, type BatcherConfig } from "@effectstream/batcher-sdk";
 import { createEffectstreamL2Adapter } from "./effectstream-l2.ts";
 import { createMidnightBalancingAdapter } from "./midnight-balancing.ts";
+import {
+  DurableReplayGuard,
+  ShadowBidSettlementAdapter,
+  type AuthoritativeSettlementReader,
+} from "./shadowbid-settlement.ts";
 
 const batchIntervalMs = 1000;
 const port = Number(process.env.BATCHER_PORT ?? "3334");
@@ -19,14 +24,28 @@ const midnight = createMidnightBalancingAdapter({
   syncProtocolName: "parallelMidnight",
 });
 
+// This deliberately fails closed until deployment supplies a reader backed by
+// finalized EVM + Midnight contract state and the coordinator result authority.
+// The EffectStream API/database is intentionally not used as that reader.
+const unavailableSettlementReader: AuthoritativeSettlementReader = {
+  async getSettlementReadyState() { return null; },
+};
+const shadowbid = new ShadowBidSettlementAdapter(
+  midnight,
+  unavailableSettlementReader,
+  new DurableReplayGuard("./batcher-data"),
+);
+
 const config: BatcherConfig = {
   pollingIntervalMs: batchIntervalMs,
-  adapters: { paimaL2, midnight },
-  defaultTarget: "paimaL2",
+  adapters: { paimaL2, shadowbid },
+  // Omitted targets must reach the strict ShadowBid adapter and be rejected;
+  // unrelated Paima L2 input callers must name `paimaL2` explicitly.
+  defaultTarget: "shadowbid",
   namespace: "",
   batchingCriteria: {
     paimaL2: { criteriaType: "time", timeWindowMs: batchIntervalMs },
-    midnight: { criteriaType: "time", timeWindowMs: batchIntervalMs },
+    shadowbid: { criteriaType: "time", timeWindowMs: batchIntervalMs },
   },
   confirmationLevel: "wait-effectstream-processed",
   enableHttpServer: true,

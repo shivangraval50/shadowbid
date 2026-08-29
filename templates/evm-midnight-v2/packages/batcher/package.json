@@ -9,7 +9,7 @@
   "dependencies": {
     "@effectstream/batcher-sdk": "0.200.1",
     "@evm-midnight/contracts-evm": "workspace:*",
-    "@evm-midnight/midnight-contract": "workspace:*",
+    "@evm-midnight/shadowbid-midnight-contract": "workspace:*",
     "effection": "^3.5.0"
   }
 }
