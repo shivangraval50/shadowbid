@@ -141,6 +141,7 @@ run_agent() {
     log "Skipping completed task $task"
     return 0
   fi
+  session_id="$(jq -r '.session_id_if_available // empty' "$STATUS_DIR/$task.json" 2>/dev/null || true)"
 
   while [[ "$attempt" -le 2 ]]; do
     write_status "$task" "$role" "$model" "RUNNING" "$task_dir" "$session_id" "" "Codex attempt $attempt"
@@ -198,6 +199,15 @@ ensure_worktree() {
     ln -s "$TEMPLATE_DIR/node_modules" "$worktree_path/$TEMPLATE_REL/node_modules"
   fi
   printf '%s\n' "$worktree_path"
+}
+
+sync_clean_worktree_to_head() {
+  local worktree="$1"
+  if [[ -n "$(git -C "$worktree" status --porcelain)" ]]; then
+    log "Cannot synchronize worktree with uncommitted changes: $worktree"
+    return 1
+  fi
+  git -C "$worktree" merge --ff-only shadowbid-build
 }
 
 validate_owned_changes() {
@@ -345,8 +355,38 @@ run_terra_with_blocker_review "core" "$PROMPT_DIR/core.md" "$CORE_DIR" || incomp
 checkpoint_worktree "core" "$CORE_ROOT" || incomplete "core produced no safe checkpoint" "contracts and cross-chain core" "architecture review" "inspect $CORE_ROOT"
 merge_branch shadowbid/core
 
+MIDNIGHT_ROOT="$(ensure_worktree shadowbid-midnight shadowbid/midnight)"
+EFFECTSTREAM_ROOT="$(ensure_worktree shadowbid-effectstream shadowbid/effectstream)"
+MIDNIGHT_DIR="$MIDNIGHT_ROOT/$TEMPLATE_REL"
+EFFECTSTREAM_DIR="$EFFECTSTREAM_ROOT/$TEMPLATE_REL"
+
+set +e
+run_terra_with_blocker_review "midnight-core" "$PROMPT_DIR/midnight-core.md" "$MIDNIGHT_DIR" &
+MIDNIGHT_PID=$!
+run_terra_with_blocker_review "effectstream-core" "$PROMPT_DIR/effectstream-core.md" "$EFFECTSTREAM_DIR" &
+EFFECTSTREAM_PID=$!
+wait "$MIDNIGHT_PID"
+MIDNIGHT_RC=$?
+wait "$EFFECTSTREAM_PID"
+EFFECTSTREAM_RC=$?
+set -e
+[[ "$MIDNIGHT_RC" -eq 0 ]] || incomplete "Midnight core failed after escalation" "Midnight/Compact" "EVM core merge" "inspect midnight-core logs and resume"
+[[ "$EFFECTSTREAM_RC" -eq 0 ]] || incomplete "EffectStream core failed after escalation" "EffectStream/database" "EVM core merge" "inspect effectstream-core logs and resume"
+checkpoint_worktree "midnight-core" "$MIDNIGHT_ROOT" || incomplete "Midnight core produced no safe checkpoint" "Midnight/Compact" "EVM core merge" "inspect Midnight worktree"
+checkpoint_worktree "effectstream-core" "$EFFECTSTREAM_ROOT" || incomplete "EffectStream core produced no safe checkpoint" "EffectStream/database" "EVM core merge" "inspect EffectStream worktree"
+merge_branch shadowbid/midnight
+merge_branch shadowbid/effectstream
+
+BATCHER_ROOT="$(ensure_worktree shadowbid-batcher shadowbid/batcher)"
+BATCHER_DIR="$BATCHER_ROOT/$TEMPLATE_REL"
+run_terra_with_blocker_review "batcher-core" "$PROMPT_DIR/batcher-core.md" "$BATCHER_DIR" || incomplete "batcher core failed after escalation" "batcher settlement" "Midnight/EffectStream merge" "inspect batcher-core logs and resume"
+checkpoint_worktree "batcher-core" "$BATCHER_ROOT" || incomplete "batcher core produced no safe checkpoint" "batcher settlement" "Midnight/EffectStream merge" "inspect batcher worktree"
+merge_branch shadowbid/batcher
+
 FRONTEND_ROOT="$(ensure_worktree shadowbid-frontend shadowbid/frontend)"
 TESTS_ROOT="$(ensure_worktree shadowbid-tests shadowbid/tests)"
+sync_clean_worktree_to_head "$FRONTEND_ROOT" || incomplete "frontend worktree cannot fast-forward" "frontend" "stable core" "inspect frontend worktree"
+sync_clean_worktree_to_head "$TESTS_ROOT" || incomplete "tests worktree cannot fast-forward" "tests" "stable core" "inspect tests worktree"
 FRONTEND_DIR="$FRONTEND_ROOT/$TEMPLATE_REL"
 TESTS_DIR="$TESTS_ROOT/$TEMPLATE_REL"
 
