@@ -3,6 +3,7 @@ import * as config from "./hardhat.config.ts";
 import Erc20DevModule from "./ignition/modules/erc20dev.ts";
 import PaimaL2ContractModule from "./ignition/modules/paimaL2.ts";
 import Erc721DevModule from "./ignition/modules/erc721dev.ts";
+import ShadowBidAuctionModule from "./ignition/modules/shadowBidAuction.ts";
 import type { buildModule } from "@nomicfoundation/ignition-core";
 
 const __dirname: any = import.meta.dirname;
@@ -31,6 +32,16 @@ const myDeployments: Deployment[] = [
   {
     module: Erc721DevModule,
     network: "evmMainHttp",
+  },
+  {
+    module: ShadowBidAuctionModule,
+    network: "evmMainHttp",
+    parameters: {
+      ShadowBidAuctionModule: {
+        // Local Anvil account #0. Production must provide a coordinator key.
+        settlementSigner: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      },
+    },
   },
   {
     module: Erc20DevModule,
