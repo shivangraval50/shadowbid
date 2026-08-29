@@ -16,4 +16,27 @@ describe("ShadowBid Compact privacy boundary", () => {
     expect(source).not.toMatch(/disclose\(amount\).*open_and_consume/);
     expect(source).toContain("persistentHash<Nullifier>");
   });
+
+  test("exposes both private-bid lifecycle paths and public result handling", () => {
+    for (const circuit of [
+      "register_auction",
+      "commit_bid_0",
+      "commit_bid_1",
+      "close_commitments",
+      "open_and_consume_0",
+      "open_and_consume_1",
+      "publish_coordinator_result",
+    ]) {
+      expect(source).toContain(`export circuit ${circuit}`);
+    }
+    expect(source).toContain("assert(public_commitment == commitment_0 || public_commitment == commitment_1");
+    expect(source).toContain("assert(settled == false");
+  });
+
+  test("supports the deterministic three-bidder flow required by the protocol", () => {
+    // This is intentionally an executable capability assertion: a two-slot
+    // ledger cannot safely claim support for three private bidders.
+    expect(source).toContain("commitment_2");
+    expect(source).toContain("commit_bid_2");
+  });
 });

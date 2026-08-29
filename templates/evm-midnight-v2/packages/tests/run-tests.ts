@@ -162,6 +162,9 @@ async function test() {
     const { erc721PropertiesTest } = await import("./stm/erc721-properties.test.ts");
     await erc721PropertiesTest(db);
 
+    const { shadowBidPrivacyTest } = await import("./stm/shadowbid-privacy.test.ts");
+    await shadowBidPrivacyTest(db);
+
     // ── Phase C: Cross-chain (EVM mint + transfer + DB + API) ───────────
     console.log("\n--- Phase C: Cross-Chain Tests ---\n");
     const { crossChainTest } = await import("./stm/cross-chain.test.ts");
