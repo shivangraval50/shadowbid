@@ -216,6 +216,10 @@ validate_owned_changes() {
   while IFS= read -r changed_path; do
     [[ -z "$changed_path" ]] && continue
     case "$changed_path" in
+      */node_modules|*/node_modules/*|*/node_modules.*|*/node_modules.*/*)
+        log "Refusing to checkpoint generated dependency path: $changed_path"
+        return 1
+        ;;
       "$TEMPLATE_REL"/*) ;;
       *)
         log "Refusing to checkpoint out-of-scope path from task worktree: $changed_path"

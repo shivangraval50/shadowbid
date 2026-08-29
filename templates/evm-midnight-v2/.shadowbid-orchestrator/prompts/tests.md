@@ -6,6 +6,8 @@ Build comprehensive ShadowBid tests against the stable implemented interfaces. R
 
 Own packages/tests and test files colocated under core packages where the repository convention requires them. Avoid implementation changes unless a tiny testability correction is essential and clearly report it. Do not modify frontend production code or documentation. Do not commit.
 
+The worktree deliberately shares the validated root `node_modules` through a symlink. Do not move, rename, replace, reinstall, or checkpoint any `node_modules*` path. Use the existing dependency tree and report a resolution problem if a package-local link is missing.
+
 # Matrix
 
 Cover EVM creation/owner/escrow/deadline/premature settlement/valid settlement/double settlement/wrong winner/unauthorized/nonexistent auction; Midnight valid and invalid private bids, multiple bidders, proof/input/result handling, permitted output, and enforceable losing-bid secrecy; EffectStream event handling, transitions, duplicates, ordering, invalid transitions, and settlement readiness; batcher correct/forged/wrong/duplicate/not-ready requests; and the deterministic three-bidder flow (8, 13, 11) ending with the correct ERC-721 owner.
