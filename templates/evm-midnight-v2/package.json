@@ -6,7 +6,7 @@
     "start:mainnet": "bun run packages/node/main.mainnet.ts",
     "test": "bun run packages/tests/run-tests.ts",
     "build:evm": "bun run --filter @evm-midnight/contracts-evm build:mod",
-    "build:midnight": "bun run --filter @evm-midnight/midnight-contract compact",
+    "build:midnight": "bun run --filter @evm-midnight/shadowbid-midnight-contract compact",
     "start:frontend": "bun run --filter @evm-midnight/frontend dev",
     "build:pgtypes": "bun run --filter @evm-midnight/database pgtyped:update"
   },

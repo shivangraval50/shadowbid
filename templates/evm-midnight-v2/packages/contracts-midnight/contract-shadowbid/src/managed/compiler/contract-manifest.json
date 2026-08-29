@@ -1,0 +1,70 @@
+{
+  "manifest-version": "1",
+  "compiler-version": "0.33.0",
+  "language-version": "0.25.0",
+  "runtime-version": "0.18.0-rc.1",
+  "compiler": {
+    "type": "directory",
+    "contract-info.json": {
+      "type": "file",
+      "size": 10568,
+      "hash": "60e4e8a8c9c68d8fde80f14390eecdd9886545f76bbb6b886ddc0073c6674272"
+    }
+  },
+  "contract": {
+    "type": "directory",
+    "index.d.ts": {
+      "type": "file",
+      "size": 7391,
+      "hash": "c997706d1b36fc232c3743df822c2f92e1ec4a975b28a2703ff6666741927cf0"
+    },
+    "index.js": {
+      "type": "file",
+      "size": 257150,
+      "hash": "85b7e3fa7a227718cc89bcd0c6cfeb6ef3ed72dbf2dd7ec8c5f35f0082cb3b6f"
+    },
+    "index.js.map": {
+      "type": "file",
+      "size": 6897,
+      "hash": "aeccbc0b6376acc6afd2fecee7038101149ca1e403166a52fd2bd5640bafd489"
+    }
+  },
+  "zkir": {
+    "type": "directory",
+    "close_commitments.zkir": {
+      "type": "file",
+      "size": 3102,
+      "hash": "45f3d26545010cf40a53698706802deff963c24f702d532450c918c5b663549e"
+    },
+    "commit_bid_0.zkir": {
+      "type": "file",
+      "size": 11691,
+      "hash": "7ba3a6549439ef4bd1cac6b769ff781de9c42d0451bbb56a7eb7013f6ec4e22e"
+    },
+    "commit_bid_1.zkir": {
+      "type": "file",
+      "size": 12753,
+      "hash": "d30b28017cd8503e531c9ffff393e7713006190bee0a6e8e2af34e7bbad18b5a"
+    },
+    "open_and_consume_0.zkir": {
+      "type": "file",
+      "size": 16618,
+      "hash": "549a456e550a755a0599ae2867c9b2502148e1b2b60bf214041751a58e5dff45"
+    },
+    "open_and_consume_1.zkir": {
+      "type": "file",
+      "size": 16618,
+      "hash": "88996135f04f0d45b07fde69a2f2b9225d76e71469758fc57ac07c7c1406ad2c"
+    },
+    "publish_coordinator_result.zkir": {
+      "type": "file",
+      "size": 11359,
+      "hash": "eb746777bc97c3d7626e6391287731f772ba1ecd0287f09ec6fc5302b84bbcaf"
+    },
+    "register_auction.zkir": {
+      "type": "file",
+      "size": 11447,
+      "hash": "d110ed41b954a51e15da592eb8a9bfedc953c904a7ab149fb39d98d003933172"
+    }
+  }
+}
