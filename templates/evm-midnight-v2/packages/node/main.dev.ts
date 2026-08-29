@@ -12,6 +12,7 @@ import { migrationTable } from "@evm-midnight/database";
 import { gameStateTransitions } from "./state-machine.ts";
 import { apiRouter } from "./api.ts";
 import { grammar } from "./grammar.ts";
+import { ShadowBidAuctionPrimitive, ShadowBidMidnightPrimitive } from "./shadowbid-primitive.ts";
 
 main(function* () {
   yield* init();
@@ -26,6 +27,10 @@ main(function* () {
       migrations: migrationTable,
       apiRouter,
       grammar,
+      userDefinedPrimitives: {
+        "EVM:ShadowBidAuction": ShadowBidAuctionPrimitive,
+        "Midnight:ShadowBidPublic": ShadowBidMidnightPrimitive,
+      },
     });
   });
 

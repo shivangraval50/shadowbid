@@ -11,6 +11,11 @@ import {
 import { hardhat } from "viem/chains";
 import { getConnection } from "@effectstream/db";
 import { PrimitiveTypeEVMERC721, PrimitiveTypeMidnightGeneric } from "@effectstream/sm/builtin";
+import { getEvmEvent } from "@effectstream/config";
+import { shadowBidAuctionAbi } from "./shadowbid-primitive.ts";
+
+const shadowBidAuctionAddress = () => contractAddressesEvmMain()
+  .chain31337["ShadowBidAuctionModule#ShadowBidAuction"];
 
 const mainSyncProtocolName = "mainNtp";
 let launchStartTime: number | undefined;
@@ -64,6 +69,13 @@ export const config = new ConfigBuilder()
             .chain31337["Erc721DevModule#Erc721Dev"],
         }),
       )
+      .addDeployment(
+        (networks) => networks.evmMain,
+        () => ({
+          name: "ShadowBidAuctionModule#ShadowBidAuction",
+          address: shadowBidAuctionAddress(),
+        }),
+      )
   )
   .buildSyncProtocols((builder) =>
     builder
@@ -113,6 +125,58 @@ export const config = new ConfigBuilder()
         }),
       )
       .addPrimitive(
+        (syncProtocols) => syncProtocols.mainEvmRPC,
+        () => ({
+          name: "ShadowBidAuctionCreated",
+          type: "EVM:ShadowBidAuction",
+          startBlockHeight: 1,
+          contractAddress: shadowBidAuctionAddress(),
+          stateMachinePrefix: "shadowBidEvm",
+          chainId: "31337",
+          eventKind: "evm.auction_created",
+          abi: getEvmEvent(shadowBidAuctionAbi, "AuctionCreated(uint256,address,address,uint256,uint64,uint64,uint128,bytes32)"),
+        } as any),
+      )
+      .addPrimitive(
+        (syncProtocols) => syncProtocols.mainEvmRPC,
+        () => ({
+          name: "ShadowBidCommitmentRecorded",
+          type: "EVM:ShadowBidAuction",
+          startBlockHeight: 1,
+          contractAddress: shadowBidAuctionAddress(),
+          stateMachinePrefix: "shadowBidEvm",
+          chainId: "31337",
+          eventKind: "evm.commitment_recorded",
+          abi: getEvmEvent(shadowBidAuctionAbi, "CommitmentRecorded(uint256,bytes32)"),
+        } as any),
+      )
+      .addPrimitive(
+        (syncProtocols) => syncProtocols.mainEvmRPC,
+        () => ({
+          name: "ShadowBidAuctionSettled",
+          type: "EVM:ShadowBidAuction",
+          startBlockHeight: 1,
+          contractAddress: shadowBidAuctionAddress(),
+          stateMachinePrefix: "shadowBidEvm",
+          chainId: "31337",
+          eventKind: "evm.auction_settled",
+          abi: getEvmEvent(shadowBidAuctionAbi, "AuctionSettled(uint256,address,uint256,bytes32,bytes32)"),
+        } as any),
+      )
+      .addPrimitive(
+        (syncProtocols) => syncProtocols.mainEvmRPC,
+        () => ({
+          name: "ShadowBidAuctionCancelled",
+          type: "EVM:ShadowBidAuction",
+          startBlockHeight: 1,
+          contractAddress: shadowBidAuctionAddress(),
+          stateMachinePrefix: "shadowBidEvm",
+          chainId: "31337",
+          eventKind: "evm.auction_cancelled",
+          abi: getEvmEvent(shadowBidAuctionAbi, "AuctionCancelled(uint256,address,bool)"),
+        } as any),
+      )
+      .addPrimitive(
         (syncProtocols) => syncProtocols.parallelMidnight,
         (network, deployments, syncProtocol) => ({
           name: "MidnightContractState",
@@ -126,6 +190,21 @@ export const config = new ConfigBuilder()
           contract: { ledger: CounterContract.ledger },
           networkId: midnightNetworkConfig.id,
         }),
+      )
+      .addPrimitive(
+        (syncProtocols) => syncProtocols.parallelMidnight,
+        () => ({
+          name: "ShadowBidMidnightPublic",
+          type: "Midnight:ShadowBidPublic",
+          startBlockHeight: 1,
+          contractAddress: readMidnightContract(
+            "contract-round-value",
+            { networkId: midnightNetworkConfig.id },
+          ).contractAddress,
+          stateMachinePrefix: "shadowBidMidnight",
+          contract: { ledger: CounterContract.ledger },
+          networkId: midnightNetworkConfig.id,
+        } as any),
       )
   )
   .build();
