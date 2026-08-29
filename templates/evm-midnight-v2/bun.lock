@@ -21,7 +21,7 @@
       "dependencies": {
         "@effectstream/batcher-sdk": "0.200.1",
         "@evm-midnight/contracts-evm": "workspace:*",
-        "@evm-midnight/midnight-contract": "workspace:*",
+        "@evm-midnight/shadowbid-midnight-contract": "workspace:*",
         "effection": "^3.5.0",
       },
     },
@@ -66,6 +66,13 @@
       "name": "@evm-midnight/midnight-contract",
       "dependencies": {
         "@evm-midnight/midnight-contract": "workspace:*",
+        "vitest": "^3.2.4",
+      },
+    },
+    "packages/contracts-midnight/contract-shadowbid": {
+      "name": "@evm-midnight/shadowbid-midnight-contract",
+      "dependencies": {
+        "@midnight-ntwrk/compact-runtime": "0.18.0-rc.1",
         "vitest": "^3.2.4",
       },
     },

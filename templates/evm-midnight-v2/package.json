@@ -1,6 +1,6 @@
 {
   "private": true,
-  "workspaces": ["packages/*", "packages/contracts-midnight/contract-round-value"],
+  "workspaces": ["packages/*", "packages/contracts-midnight/contract-round-value", "packages/contracts-midnight/contract-shadowbid"],
   "scripts": {
     "dev": "NODE_ENV=development bunx orchestrator start",
     "start:mainnet": "bun run packages/node/main.mainnet.ts",

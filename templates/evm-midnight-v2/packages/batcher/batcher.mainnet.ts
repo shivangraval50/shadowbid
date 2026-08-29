@@ -2,6 +2,7 @@ import { main, suspend } from "effection";
 import { createNewBatcher, FileStorage, type BatcherConfig } from "@effectstream/batcher-sdk";
 import { createEffectstreamL2Adapter } from "./effectstream-l2.ts";
 import { createMidnightBalancingAdapter } from "./midnight-balancing.ts";
+import { DurableReplayGuard, ShadowBidSettlementAdapter, type AuthoritativeSettlementReader } from "./shadowbid-settlement.ts";
 
 const batcherPrivateKey = process.env.EVM_PRIVATE_KEY;
 if (!batcherPrivateKey) {
@@ -23,15 +24,24 @@ const midnight = createMidnightBalancingAdapter({
   networkId: "mainnet",
   syncProtocolName: "parallelMidnight",
 });
+const unavailableSettlementReader: AuthoritativeSettlementReader = {
+  async getSettlementReadyState() { return null; },
+};
+const shadowbid = new ShadowBidSettlementAdapter(
+  midnight,
+  unavailableSettlementReader,
+  new DurableReplayGuard("./batcher-data"),
+);
 
 const config: BatcherConfig = {
   pollingIntervalMs: batchIntervalMs,
-  adapters: { paimaL2, midnight },
-  defaultTarget: "paimaL2",
+  adapters: { paimaL2, shadowbid },
+  // Never let a ShadowBid request fall through to a generic default target.
+  defaultTarget: "shadowbid",
   namespace: "",
   batchingCriteria: {
     paimaL2: { criteriaType: "time", timeWindowMs: batchIntervalMs },
-    midnight: { criteriaType: "time", timeWindowMs: batchIntervalMs },
+    shadowbid: { criteriaType: "time", timeWindowMs: batchIntervalMs },
   },
   confirmationLevel: "wait-effectstream-processed",
   enableHttpServer: true,
