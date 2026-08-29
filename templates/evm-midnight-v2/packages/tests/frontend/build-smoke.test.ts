@@ -9,6 +9,10 @@ export async function frontendBuildTest() {
       ["bunx", "vite", "build", "--mode", "dev"],
       {
         cwd: frontendDir,
+        env: {
+          ...process.env,
+          NODE_OPTIONS: "--max-old-space-size=4096",
+        },
         stdout: "pipe",
         stderr: "pipe",
       },

@@ -190,6 +190,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "graphql-tag@2.12.7": "patches/graphql-tag@2.12.7.patch",
+  },
   "overrides": {
     "@effect/platform": "0.96.1",
     "@midnightntwrk/ledger-v9": "1.0.0-rc.3",

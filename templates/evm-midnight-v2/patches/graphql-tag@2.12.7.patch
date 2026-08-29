@@ -1,0 +1,13 @@
+diff --git a/package.json b/package.json
+index 71a1d282b4fdee36fa8013300bede23d7803854a..c5e345007193c16b37738b05a2112bcb60f6a631 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,7 @@
+   "name": "graphql-tag",
+   "version": "2.12.7",
+   "description": "A JavaScript template literal tag that parses GraphQL queries",
+-  "main": "./main.js",
++  "main": "./lib/index.js",
+   "module": "./lib/index.js",
+   "jsnext:main": "./lib/index.js",
+   "types": "./lib/index.d.ts",

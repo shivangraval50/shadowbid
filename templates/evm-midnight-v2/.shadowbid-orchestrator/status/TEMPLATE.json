@@ -1,0 +1,16 @@
+{
+  "task": "<stable-task-name>",
+  "model_role": "cheap|engineering|review",
+  "model_actual": "<model-id>",
+  "branch": "<branch-name>",
+  "worktree": "<absolute-path>",
+  "started_at": "<ISO-8601>",
+  "finished_at": "<ISO-8601-or-null>",
+  "status": "PENDING|RUNNING|PASSED|FAILED_RETRYABLE|FAILED_ARCHITECTURE|WAITING_FOR_CODEX_RESET|BLOCKED_EXTERNAL",
+  "tests_run": [],
+  "tests_passed": null,
+  "files_changed": [],
+  "blockers": [],
+  "next_action": "<short-action>",
+  "session_id_if_available": null
+}

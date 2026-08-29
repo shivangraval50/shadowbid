@@ -178,7 +178,7 @@ export function createWalletConfiguration(
       feeBlocksMargin: DUST_FEE_BLOCKS_MARGIN,
     },
     txHistoryStorage: new InMemoryTransactionHistoryStorage(
-      TransactionHistoryStorage.TransactionHistoryCommonSchema,
+      TransactionHistoryStorage.TransactionHistoryEntryCommonSchema,
     ),
   };
 }

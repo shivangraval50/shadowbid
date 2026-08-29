@@ -1,1 +1,10 @@
 packages/contracts-midnight/contract-round-value/src/managed
+.shadowbid-orchestrator/artifacts/
+.shadowbid-orchestrator/handoffs/
+.shadowbid-orchestrator/locks/
+.shadowbid-orchestrator/logs/
+.shadowbid-orchestrator/reviews/
+.shadowbid-orchestrator/sessions/
+.shadowbid-orchestrator/status/*.json
+.shadowbid-orchestrator/status/WAITING_FOR_USER.md
+!.shadowbid-orchestrator/status/TEMPLATE.json
