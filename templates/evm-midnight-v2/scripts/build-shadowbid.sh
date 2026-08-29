@@ -204,8 +204,8 @@ ensure_worktree() {
 sync_clean_worktree_to_head() {
   local worktree="$1"
   if [[ -n "$(git -C "$worktree" status --porcelain)" ]]; then
-    log "Cannot synchronize worktree with uncommitted changes: $worktree"
-    return 1
+    log "Preserving resumable uncommitted task changes without fast-forwarding: $worktree"
+    return 0
   fi
   git -C "$worktree" merge --ff-only shadowbid-build
 }
