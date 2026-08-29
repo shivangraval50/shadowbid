@@ -1,20 +1,16 @@
 import { deployMidnightContract } from "@effectstream/midnight-contracts/deploy";
 import type { DeployConfig } from "@effectstream/midnight-contracts/types";
 import { midnightNetworkConfig } from "@effectstream/midnight-contracts/midnight-env";
-import {
-  Counter,
-  type CounterPrivateState,
-  witnesses,
-} from "./contract-round-value/src/index.original.ts";
+import { ShadowBid, type ShadowBidPrivateState, witnesses } from "./contract-shadowbid/src/_index.ts";
 
 const config: DeployConfig = {
-  contractName: "contract-round-value",
-  contractFileName: "contract-round-value.json",
-  contractClass: Counter.Contract,
+  contractName: "contract-shadowbid",
+  contractFileName: "contract-shadowbid.json",
+  contractClass: ShadowBid.Contract,
   witnesses,
-  privateStateId: "counterPrivateState",
-  initialPrivateState: { privateCounter: 0 } as CounterPrivateState,
-  privateStateStoreName: "counter-private-state",
+  privateStateId: "shadowBidPrivateState",
+  initialPrivateState: { bids: {} } as ShadowBidPrivateState,
+  privateStateStoreName: "shadowbid-private-state",
 };
 
 deployMidnightContract(config, midnightNetworkConfig)

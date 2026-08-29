@@ -1,0 +1,65 @@
+pragma language_version >= 0.25;
+import CompactStandardLibrary;
+
+struct Bid { version: Uint<32>; chain: Uint<64>; evm: Bytes<32>; auction: Bytes<32>; network: Bytes<32>; midnight: Bytes<32>; bidder: Bytes<32>; amount: Uint<64>; }
+struct Nullifier { version: Uint<32>; chain: Uint<64>; evm: Bytes<32>; auction: Bytes<32>; network: Bytes<32>; midnight: Bytes<32>; bidder: Bytes<32>; amount: Uint<64>; salt: Bytes<32>; }
+
+// All fields below are public except bid inputs. The commitment opening (amount
+// and salt) stays private because it is never passed to disclose().
+export ledger initialized: Boolean;
+export ledger commitments_closed: Boolean;
+export ledger settled: Boolean;
+export ledger auction_id: Bytes<32>;
+export ledger protocol_version: Uint<32>;
+export ledger evm_chain_id: Uint<64>;
+export ledger evm_auction: Bytes<32>;
+export ledger midnight_network: Bytes<32>;
+export ledger midnight_contract: Bytes<32>;
+export ledger commit_deadline: Uint<64>;
+export ledger settlement_deadline: Uint<64>;
+export ledger commitment_count: Counter;
+export ledger commitment_0: Bytes<32>;
+export ledger commitment_1: Bytes<32>;
+export ledger committed_0: Boolean;
+export ledger committed_1: Boolean;
+export ledger nullifier_0: Bytes<32>;
+export ledger nullifier_1: Bytes<32>;
+export ledger consumed_0: Boolean;
+export ledger consumed_1: Boolean;
+export ledger winner: Bytes<32>;
+export ledger winning_commitment: Bytes<32>;
+export ledger winning_amount: Uint<64>;
+export ledger settlement_digest: Bytes<32>;
+export ledger settlement_nonce: Uint<64>;
+
+export circuit register_auction(id: Bytes<32>, version: Uint<32>, chain: Uint<64>, evm: Bytes<32>, network: Bytes<32>, midnight: Bytes<32>, commit_by: Uint<64>, settle_by: Uint<64>): [] {
+  assert(initialized == false, "registered"); assert(commit_by < settle_by, "deadlines");
+  auction_id = disclose(id); protocol_version = disclose(version); evm_chain_id = disclose(chain); evm_auction = disclose(evm); midnight_network = disclose(network); midnight_contract = disclose(midnight); commit_deadline = disclose(commit_by); settlement_deadline = disclose(settle_by); initialized = true;
+}
+
+export circuit commit_bid_0(bidder: Bytes<32>, amount: Uint<64>, salt: Bytes<32>): [] {
+  assert(initialized == true, "unregistered"); assert(commitments_closed == false, "closed"); assert(committed_0 == false, "used");
+  const bid = Bid { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount };
+  commitment_0 = disclose(persistentCommit<Bid>(bid, salt)); committed_0 = true; commitment_count.increment(1);
+}
+export circuit commit_bid_1(bidder: Bytes<32>, amount: Uint<64>, salt: Bytes<32>): [] {
+  assert(initialized == true, "unregistered"); assert(commitments_closed == false, "closed"); assert(committed_1 == false, "used");
+  const bid = Bid { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount };
+  const commitment = persistentCommit<Bid>(bid, salt); assert(commitment != commitment_0, "duplicate"); commitment_1 = disclose(commitment); committed_1 = true; commitment_count.increment(1);
+}
+export circuit close_commitments(): [] { assert(initialized == true, "unregistered"); assert(commitments_closed == false, "closed"); commitments_closed = true; }
+export circuit open_and_consume_0(bidder: Bytes<32>, amount: Uint<64>, salt: Bytes<32>): [] {
+  assert(commitments_closed == true, "open"); assert(consumed_0 == false, "consumed");
+  const bid = Bid { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount }; assert(persistentCommit<Bid>(bid, salt) == commitment_0, "opening");
+  const n = Nullifier { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount, salt: salt }; nullifier_0 = disclose(persistentHash<Nullifier>(n)); consumed_0 = true;
+}
+export circuit open_and_consume_1(bidder: Bytes<32>, amount: Uint<64>, salt: Bytes<32>): [] {
+  assert(commitments_closed == true, "open"); assert(consumed_1 == false, "consumed");
+  const bid = Bid { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount }; assert(persistentCommit<Bid>(bid, salt) == commitment_1, "opening");
+  const n = Nullifier { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount, salt: salt }; nullifier_1 = disclose(persistentHash<Nullifier>(n)); consumed_1 = true;
+}
+export circuit publish_coordinator_result(winner_: Bytes<32>, commitment: Bytes<32>, amount: Uint<64>, digest: Bytes<32>, nonce: Uint<64>): [] {
+  const public_commitment = disclose(commitment);
+  assert(commitments_closed == true, "open"); assert(settled == false, "settled"); assert(public_commitment == commitment_0 || public_commitment == commitment_1, "unknown");
+  winner = disclose(winner_); winning_commitment = public_commitment; winning_amount = disclose(amount); settlement_digest = disclose(digest); settlement_nonce = disclose(nonce); settled = true;
+}
