@@ -1,6 +1,6 @@
 # ShadowBid master-orchestration preflight
 
-Date: 2026-08-29  
+Date: 2026-08-29
 Scope: prepare the untouched/reference EffectStream EVM + Midnight template for the *next* master orchestration prompt. No ShadowBid feature code was created or changed during this preflight.
 
 ## Preserved reference baseline
