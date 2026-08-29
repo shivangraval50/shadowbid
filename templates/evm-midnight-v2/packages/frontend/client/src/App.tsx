@@ -1,91 +1,34 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import "./App.css";
-
-// Import components
-import { Header } from "./components/Header.tsx";
-import { WalletDemo } from "./components/WalletDemo.tsx";
+import { WalletModal } from "./components/WalletModal.tsx";
+import { useWallet, WalletProvider } from "./contexts/WalletContext.tsx";
 import { blockWatcher } from "./hooks/BlockWatcher.ts";
 
-// Import hooks
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:9999";
+type Phase = "COMMIT" | "SETTLEMENT_READY" | "SETTLED" | "CANCELLED";
+type Auction = { auction_id: string; seller: string; nft_address: string; token_id: string; commit_deadline: string; settlement_deadline: string; reserve_price: string; midnight_domain: string; phase: Phase; commitment_count: number; midnight_commitment_count: number; winner: string | null; winning_amount: string | null; settlement_ready: boolean; evm_chain_id: string; midnight_network_id: string | null };
+type ServiceState = { auction_count: number; commit_count: number; settlement_ready_count: number; settled_count: number };
+type NFT = { token_id: string; owner: string | null; property_name: string; value: string };
+const short = (v?: string | null) => v ? `${v.slice(0, 6)}…${v.slice(-4)}` : "—";
+const date = (v: string) => { const d = new Date(v); return Number.isNaN(d.getTime()) ? "Unknown" : d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); };
 
-// Import wallet context
-import { WalletProvider } from "./contexts/WalletContext.tsx";
-
-function App() {
-  const [latestBlock, setLatestBlock] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-    const watchBlocks = async () => {
-      let currentBlock = await blockWatcher.waitForBlock("__main__", 0);
-      if (isMounted) {
-        setLatestBlock(currentBlock);
-        setIsConnected(true);
-      }
-
-      while (isMounted) {
-        currentBlock = await blockWatcher.waitForBlock(
-          "__main__",
-          currentBlock + 1,
-        );
-        if (isMounted) {
-          setLatestBlock(currentBlock);
-        }
-      }
-    };
-
-    watchBlocks();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Error handling for uncaught promises
-  useEffect(() => {
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error("Unhandled promise rejection:", event.reason);
-    };
-
-    window.addEventListener("unhandledrejection", handleUnhandledRejection);
-
-    return () => {
-      window.removeEventListener(
-        "unhandledrejection",
-        handleUnhandledRejection,
-      );
-    };
-  }, []);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "r" && event.ctrlKey) {
-        event.preventDefault();
-        console.log("🔄 Manually refreshed (keyboard shortcut)");
-        // You could add manual refresh logic here if needed
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
-  return (
-    <WalletProvider>
-      <div className="container">
-        <Header
-          latestBlock={latestBlock}
-          isConnected={isConnected}
-        />
-
-        <WalletDemo />
-      </div>
-    </WalletProvider>
-  );
+function AppContent() {
+  const { isConnected, address, openModal, isModalOpen, closeModal } = useWallet();
+  const [auctions, setAuctions] = useState<Auction[]>([]); const [service, setService] = useState<ServiceState | null>(null); const [nfts, setNfts] = useState<NFT[]>([]); const [selected, setSelected] = useState<Auction | null>(null); const [view, setView] = useState<"dashboard" | "create">("dashboard"); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null); const [latestBlock, setLatestBlock] = useState(0); const [proofStage, setProofStage] = useState("idle"); const [form, setForm] = useState({ tokenId: "", reserve: "", deadline: "" });
+  const load = useCallback(async () => { setLoading(true); setError(null); try { const [a, s, n] = await Promise.all([fetch(`${API_URL}/api/auctions`), fetch(`${API_URL}/api/shadowbid/service-state`), fetch(`${API_URL}/api/erc721`)]); if (!a.ok || !s.ok || !n.ok) throw new Error("One or more ShadowBid read APIs are unavailable."); setAuctions(await a.json()); setService(await s.json()); setNfts(await n.json()); } catch (e) { setError(e instanceof Error ? e.message : "Unable to load ShadowBid state."); } finally { setLoading(false); } }, []);
+  useEffect(() => { load(); const id = setInterval(load, 10000); return () => clearInterval(id); }, [load]);
+  useEffect(() => { let active = true; blockWatcher.waitForBlock("__main__", 0).then((b) => { if (active) setLatestBlock(b); }).catch(() => undefined); return () => { active = false; }; }, []);
+  const selectedNft = useMemo(() => nfts.find((n) => n.token_id === selected?.token_id), [nfts, selected]);
+  const unsupportedFlow = () => { setProofStage("preparing"); window.setTimeout(() => setProofStage("idle"), 1400); };
+  const goHome = () => { setView("dashboard"); setSelected(null); };
+  return <div className="app-shell"><header className="topbar"><button className="brand" onClick={goHome} aria-label="ShadowBid home"><span className="brand-mark">S</span><span>SHADOW<span className="brand-accent">BID</span></span></button><nav className="nav-links" aria-label="Primary navigation"><button className={view === "dashboard" && !selected ? "active" : ""} onClick={goHome}>Auctions</button><button className={view === "create" ? "active" : ""} onClick={() => { setView("create"); setSelected(null); }}>Create auction</button><a href="#privacy">Privacy model</a></nav><div className="topbar-actions"><span className="network-pill"><i className="status-dot" />Local network <span className="chain-id">{latestBlock ? `#${latestBlock.toLocaleString()}` : "connecting"}</span></span><button className="connect-button" onClick={openModal}>{isConnected ? short(address) : "Connect wallet"}</button></div></header>
+    <main><section className="hero"><div><div className="eyebrow"><span className="eyebrow-line" />PRIVATE NFT AUCTIONS</div><h1>Bid without<br /><em>showing your hand.</em></h1><p className="hero-copy">ShadowBid keeps bid amounts private while the auction state stays auditable across EVM, EffectStream, and Midnight.</p><div className="hero-actions"><button className="primary-button" onClick={() => document.getElementById("auction-grid")?.scrollIntoView({ behavior: "smooth" })}>Explore auctions <span>↗</span></button><button className="text-button" onClick={() => document.getElementById("privacy")?.scrollIntoView({ behavior: "smooth" })}>How privacy works <span>↓</span></button></div></div><div className="hero-art" aria-label="EVM to EffectStream to Midnight visualization"><div className="orb orb-left"><span>EVM</span><small>commit</small></div><div className="orb orb-mid"><span>ES</span><small>coordinate</small></div><div className="orb orb-right"><span>MIDNIGHT</span><small>prove</small></div><div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="signal signal-one" /><div className="signal signal-two" /><div className="hero-caption">PRIVATE VALUE <span>→</span> PUBLIC OUTCOME</div></div></section>
+      <section className="status-strip" aria-label="Network status"><div><span className="status-label">SERVICE STATUS</span><strong><i className={`status-dot ${error ? "status-dot-error" : ""}`} />{loading ? "Syncing" : error ? "Unavailable" : "Operational"}</strong></div><div><span className="status-label">AUCTIONS TRACKED</span><strong>{service?.auction_count ?? auctions.length}</strong></div><div><span className="status-label">COMMITMENTS</span><strong>{service?.commit_count ?? "—"}</strong></div><div><span className="status-label">SETTLEMENT READY</span><strong>{service?.settlement_ready_count ?? "—"}</strong></div><div className="status-note">Amounts are never exposed in the public dashboard.</div></section>
+      {view === "create" ? <CreateView form={form} setForm={setForm} onBack={goHome} /> : selected ? <DetailView auction={selected} nft={selectedNft} proofStage={proofStage} onBack={() => setSelected(null)} onStart={unsupportedFlow} /> : <section id="auction-grid" className="auction-section"><div className="section-heading"><div><span className="eyebrow">LIVE REGISTRY</span><h2>Auctions in the network</h2></div><button className="refresh-button" onClick={load} disabled={loading}>↻ {loading ? "Syncing" : "Refresh"}</button></div>{error ? <div className="state-card error-state"><span className="state-icon">!</span><div><h3>Registry unavailable</h3><p>{error}</p></div><button className="secondary-button" onClick={load}>Try again</button></div> : loading ? <div className="state-card"><span className="spinner" /><div><h3>Reading the registry…</h3><p>Fetching auction state from the local ShadowBid API.</p></div></div> : auctions.length === 0 ? <div className="state-card empty-state"><span className="state-icon">◇</span><div><h3>No auctions indexed yet</h3><p>When an auction is created on EVM, its public state will appear here. Private bid values will remain hidden.</p></div><button className="secondary-button" onClick={() => setView("create")}>View create flow</button></div> : <div className="auction-grid">{auctions.map((a) => <AuctionCard key={a.auction_id} auction={a} nft={nfts.find((n) => n.token_id === a.token_id)} onOpen={() => setSelected(a)} />)}</div>}</section>}
+      <section id="privacy" className="privacy-section"><div className="section-heading"><div><span className="eyebrow">THE PRIVACY MODEL</span><h2>See the state. Keep the value private.</h2></div><span className="privacy-badge">NO BID OPENINGS IN API</span></div><div className="privacy-grid"><InfoCard n="01" title="Commit on EVM" text="Each bidder publishes a commitment. The amount and salt stay with the bidder." tag="PUBLIC HASH ONLY" /><InfoCard n="02" title="Coordinate on EffectStream" text="Cross-chain facts are indexed for a shared auction state. EffectStream is not a proof verifier." tag="AUDITABLE STATE" /><InfoCard n="03" title="Prove on Midnight" text="Only a valid settlement result can reveal the final owner and amount at settlement." tag="PRIVATE CIRCUIT" /></div></section></main><footer><span>SHADOWBID / EFFECTSTREAM TEMPLATE</span><span>Read-only dashboard · local development network</span></footer>{isModalOpen && <WalletModal onClose={closeModal} />}</div>;
 }
-
-export default App;
+function InfoCard({ n, title, text, tag }: { n: string; title: string; text: string; tag: string }) { return <div className="privacy-card"><span className="step-number">{n}</span><h3>{title}</h3><p>{text}</p><span className="privacy-tag">{tag}</span></div>; }
+function AuctionCard({ auction, nft, onOpen }: { auction: Auction; nft?: NFT; onOpen: () => void }) { return <article className="auction-card"><div className="nft-visual"><span className="nft-noise" /><span className="nft-glyph">{auction.token_id.slice(-2).padStart(2, "0")}</span><span className="token-label">TOKEN #{auction.token_id}</span></div><div className="card-body"><div className="card-topline"><span className={`phase phase-${auction.phase.toLowerCase()}`}>{auction.phase.replace("_", " ")}</span><span className="auction-id">ID {short(auction.auction_id)}</span></div><h3>{nft?.value || `NFT #${auction.token_id}`}</h3><p className="muted">{auction.midnight_domain || "Midnight domain"}</p><div className="card-meta"><span><small>RESERVE</small><strong>Hidden</strong></span><span><small>COMMITMENTS</small><strong>{auction.commitment_count + auction.midnight_commitment_count}</strong></span><span><small>CLOSES</small><strong>{date(auction.commit_deadline)}</strong></span></div><button className="card-button" onClick={onOpen}>View auction <span>↗</span></button></div></article>; }
+function DetailView({ auction, nft, proofStage, onBack, onStart }: { auction: Auction; nft?: NFT; proofStage: string; onBack: () => void; onStart: () => void }) { return <section className="detail-view"><button className="back-button" onClick={onBack}>← Back to auctions</button><div className="detail-layout"><div className="detail-art nft-visual"><span className="nft-noise" /><span className="nft-glyph">{auction.token_id.slice(-2).padStart(2, "0")}</span><span className="token-label">EVM NFT / #{auction.token_id}</span></div><div className="detail-copy"><div className="card-topline"><span className={`phase phase-${auction.phase.toLowerCase()}`}>{auction.phase.replace("_", " ")}</span><span className="auction-id">AUCTION {auction.auction_id}</span></div><h2>{nft?.value || `NFT #${auction.token_id}`}</h2><p className="hero-copy">A private reserve auction for token #{auction.token_id}. Public state is indexed; bid values are intentionally unavailable.</p><div className="detail-facts"><div><small>SELLER</small><strong>{short(auction.seller)}</strong></div><div><small>RESERVE</small><strong>Hidden by design</strong></div><div><small>COMMIT DEADLINE</small><strong>{date(auction.commit_deadline)}</strong></div><div><small>SETTLEMENT</small><strong>{auction.settlement_ready ? "Ready" : "Not ready"}</strong></div></div><div className="flow-card"><div><span className="flow-status active" />Your private bid</div><p>Wallet and bid submission wiring is not connected in this frontend build.</p><button className="primary-button" onClick={onStart} disabled={proofStage !== "idle"}>{proofStage === "preparing" ? "Preparing…" : "Start private bid flow"}</button>{proofStage !== "idle" && <span className="honest-note">Demo state only — no transaction or proof was submitted.</span>}</div></div></div></section>; }
+function CreateView({ form, setForm, onBack }: { form: { tokenId: string; reserve: string; deadline: string }; setForm: Dispatch<SetStateAction<{ tokenId: string; reserve: string; deadline: string }>>; onBack: () => void }) { return <section className="create-view"><button className="back-button" onClick={onBack}>← Back to auctions</button><div className="create-header"><span className="eyebrow">NEW AUCTION</span><h2>Put an NFT behind a commitment.</h2><p>Create flow is staged for the stabilized auction contract interface. Submission is intentionally disabled until the frontend write adapter is connected.</p></div><div className="create-grid"><form className="create-form" onSubmit={(e) => e.preventDefault()}><label>NFT token ID<input value={form.tokenId} onChange={(e) => setForm({ ...form, tokenId: e.target.value })} placeholder="e.g. 42" /></label><label>Reserve price<input value={form.reserve} onChange={(e) => setForm({ ...form, reserve: e.target.value })} placeholder="Hidden on chain" /></label><label>Commit deadline<input type="datetime-local" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} /></label><button className="primary-button" disabled>Create auction <span>↗</span></button><span className="honest-note">Write action unavailable: this form does not send a transaction.</span></form><div className="preview-card"><span className="eyebrow">PREVIEW</span><div className="preview-line"><span>Token</span><strong>{form.tokenId || "—"}</strong></div><div className="preview-line"><span>Reserve</span><strong>Private</strong></div><div className="preview-line"><span>Cross-chain path</span><strong>EVM → EffectStream ← Midnight</strong></div><div className="preview-divider" /><p>After wiring, this step will create the EVM auction and expose only its public commitment state.</p></div></div></section>; }
+export default function App() { return <WalletProvider><AppContent /></WalletProvider>; }
