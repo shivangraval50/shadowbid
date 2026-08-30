@@ -20,56 +20,179 @@
     },
     "index.js": {
       "type": "file",
-      "size": 291068,
-      "hash": "64dee5d70cfb6be91119c36c39c021f121d0db89621042aff9d8683e86aa9b68"
+      "size": 291784,
+      "hash": "c21e5db375e09af31926ac3116ce3ab2191804fab53c4c37c4fd1c7931e53bda"
     },
     "index.js.map": {
       "type": "file",
-      "size": 7603,
-      "hash": "c8f2d8fb67bbbd8f6892ef0468a38e8514a7888a4db20ba1431e32b313d4b473"
+      "size": 7612,
+      "hash": "9e578c5e072e5939ef4d5315c1b47675f69f7edfb5de794745003d7f886e85bd"
     }
   },
   "zkir": {
     "type": "directory",
+    "close_commitments.bzkir": {
+      "type": "file",
+      "size": 189,
+      "hash": "86ee5aea1131ef38aca2da51ccd65b05607d6135945bd59ac35542bc7dab10a4"
+    },
     "close_commitments.zkir": {
       "type": "file",
       "size": 3102,
       "hash": "45f3d26545010cf40a53698706802deff963c24f702d532450c918c5b663549e"
+    },
+    "commit_bid_0.bzkir": {
+      "type": "file",
+      "size": 637,
+      "hash": "a22607a3c1ea7d197ada005d3f26cc01a000085e9bf4c6acff7c4b750365190a"
     },
     "commit_bid_0.zkir": {
       "type": "file",
       "size": 11692,
       "hash": "f4c2b00b642e9d921ad240156732f465604e3c75dbce21f2d5d30eff0a901a1d"
     },
+    "commit_bid_1.bzkir": {
+      "type": "file",
+      "size": 695,
+      "hash": "f77aacd25934658757b164944ec46a2132b27bd1306de17e66841c81989b285f"
+    },
     "commit_bid_1.zkir": {
       "type": "file",
       "size": 12754,
       "hash": "f15cedae0c91c1e6a27379e5a36b561e41c4c3b8f9f7da87f3679e8dc1f2adc9"
+    },
+    "commit_bid_2.bzkir": {
+      "type": "file",
+      "size": 753,
+      "hash": "8825611279178dbedb0283ae7c26675ce2810f73234601d90fde5404160dca62"
     },
     "commit_bid_2.zkir": {
       "type": "file",
       "size": 13816,
       "hash": "24232c470675ec0ad8ad387a24efe751629792eaf02c60c63177cb73762456a7"
     },
+    "open_and_consume_0.bzkir": {
+      "type": "file",
+      "size": 887,
+      "hash": "773485090825de1a0cdf709b86c3a126f876446aa57ddc272e49d2dbf98c922e"
+    },
     "open_and_consume_0.zkir": {
       "type": "file",
       "size": 16657,
       "hash": "d2b85d1998622c55a6d666c29eab56f8d393044cdf62debd909efcadf48eeb5d"
+    },
+    "open_and_consume_1.bzkir": {
+      "type": "file",
+      "size": 889,
+      "hash": "27cef3a1a477f98fd186256c592cfb522516601098d17109904999261a8afb6c"
     },
     "open_and_consume_1.zkir": {
       "type": "file",
       "size": 16696,
       "hash": "eca51df8d0d75d117c7866c21846e93136539a96466747c5c68e5c1d1f155392"
     },
+    "open_and_consume_2.bzkir": {
+      "type": "file",
+      "size": 889,
+      "hash": "8ca56d3674cdd3ee692bb09891d743692f0a39b38ea37e3714d0534b46bf8973"
+    },
     "open_and_consume_2.zkir": {
       "type": "file",
       "size": 16696,
       "hash": "256b9ac2a9da498ae7de4d3d0d35045e59940b532aafd981777ea05feae36aa8"
     },
+    "register_auction.bzkir": {
+      "type": "file",
+      "size": 636,
+      "hash": "d3063d7465a7aec7ffef1606bb96fe0d50af0a3ef3b068240ca8f46a9e07dfc2"
+    },
     "register_auction.zkir": {
       "type": "file",
       "size": 11447,
       "hash": "6ce143ae83b6845a5b6c80d2422c646e5d6420287e44ad1139577b39bf6a51da"
+    }
+  },
+  "keys": {
+    "type": "directory",
+    "close_commitments.prover": {
+      "type": "file",
+      "size": 22736,
+      "hash": "2a64b8a1978be3a99187cf9d6fd071a2f9c5a31832fc952d110fe97d96b8e6dc"
+    },
+    "close_commitments.verifier": {
+      "type": "file",
+      "size": 1351,
+      "hash": "249e26917de6db3db24945e49ec5561cde834e4692d62e01653a8ea7b922b04a"
+    },
+    "commit_bid_0.prover": {
+      "type": "file",
+      "size": 5200374,
+      "hash": "6535355437d9e59c56faee132c40ac3c206524eefd3259172fb3d53e2efb4961"
+    },
+    "commit_bid_0.verifier": {
+      "type": "file",
+      "size": 2119,
+      "hash": "20affb8a9c498888dd8eaba3970b1fef4573372974c40e4f8e68fd555213928a"
+    },
+    "commit_bid_1.prover": {
+      "type": "file",
+      "size": 5200588,
+      "hash": "93420ca29409e03aeed0ae0340a97ebe8a441223d49f70068b27e3591678cf73"
+    },
+    "commit_bid_1.verifier": {
+      "type": "file",
+      "size": 2119,
+      "hash": "de579111b49796ecbdf5351dae62f37f187251199b8bc733af480ac5f67d7163"
+    },
+    "commit_bid_2.prover": {
+      "type": "file",
+      "size": 5200640,
+      "hash": "e96d7332f5666bfd2153fcee59bafecbe6a772e861ebfd7f8e80fde0ad244ee4"
+    },
+    "commit_bid_2.verifier": {
+      "type": "file",
+      "size": 2119,
+      "hash": "de19864783f825894b400eb7dbac90b2e8ad25fbf105ff9a9cbc1bca54362594"
+    },
+    "open_and_consume_0.prover": {
+      "type": "file",
+      "size": 5213272,
+      "hash": "b3346d7772680656378e20a4aa2acc5e9f20ab7bdbb0d3b87ceb4b3b82c79132"
+    },
+    "open_and_consume_0.verifier": {
+      "type": "file",
+      "size": 2119,
+      "hash": "59e835da7ec40d307d4f36788caf81a71c949a97351e2d5ff8aa4857c9902869"
+    },
+    "open_and_consume_1.prover": {
+      "type": "file",
+      "size": 5213302,
+      "hash": "125f3b486182d9b41ffb52af98452c0f0cb521e0e878044d7f9d15c0a1dfb593"
+    },
+    "open_and_consume_1.verifier": {
+      "type": "file",
+      "size": 2119,
+      "hash": "44be3268565164333c8a19f1d3605afff2dbd3c8a898a923e47b393ad6624861"
+    },
+    "open_and_consume_2.prover": {
+      "type": "file",
+      "size": 5213301,
+      "hash": "b743a9c21b598d5e8c112bf1ecfd53f5f33beba1e71fdd7ef9ca2c9cdd368d3b"
+    },
+    "open_and_consume_2.verifier": {
+      "type": "file",
+      "size": 2119,
+      "hash": "df65c6f998b7cc40504104c6dd2b2a15fc05b05aef957997f46645f850951814"
+    },
+    "register_auction.prover": {
+      "type": "file",
+      "size": 551860,
+      "hash": "ba9f42fda5837498d186a24609083add0c79aefe7f1418cf8db936ed1f396364"
+    },
+    "register_auction.verifier": {
+      "type": "file",
+      "size": 1351,
+      "hash": "63dab6a62600ec0ab7276c1be284034870bfac1c4ed8e7c34b334949d12c159e"
     }
   }
 }

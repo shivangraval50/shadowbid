@@ -3289,6 +3289,15 @@ const _dummyContract = new Contract({ });
 export const pureCircuits = {};
 export const contractReferenceLocations =
   { tag: 'publicLedgerArray', indices: { } };
-export const expectedVk = {};
+export const expectedVk = {
+  'close_commitments': '249e26917de6db3db24945e49ec5561cde834e4692d62e01653a8ea7b922b04a',
+  'commit_bid_0': '20affb8a9c498888dd8eaba3970b1fef4573372974c40e4f8e68fd555213928a',
+  'commit_bid_1': 'de579111b49796ecbdf5351dae62f37f187251199b8bc733af480ac5f67d7163',
+  'commit_bid_2': 'de19864783f825894b400eb7dbac90b2e8ad25fbf105ff9a9cbc1bca54362594',
+  'open_and_consume_0': '59e835da7ec40d307d4f36788caf81a71c949a97351e2d5ff8aa4857c9902869',
+  'open_and_consume_1': '44be3268565164333c8a19f1d3605afff2dbd3c8a898a923e47b393ad6624861',
+  'open_and_consume_2': 'df65c6f998b7cc40504104c6dd2b2a15fc05b05aef957997f46645f850951814',
+  'register_auction': '63dab6a62600ec0ab7276c1be284034870bfac1c4ed8e7c34b334949d12c159e',
+};
 
 //# sourceMappingURL=index.js.map

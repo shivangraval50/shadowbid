@@ -9,10 +9,22 @@ type Json = Record<string, unknown>;
 const prepared = <P, R>(statement: string) => {
   const params: any[] = [];
   const usedParamSet: Record<string, boolean> = {};
-  for (const match of statement.matchAll(/:([a-z_]+)(!)?/g)) {
+  // Negative lookbehind excludes PostgreSQL's `::type` cast syntax (e.g.
+  // `COUNT(*)::int`): without it, `:int` inside `::int` was matched as a
+  // named parameter, corrupting shadowBidServiceState's query into
+  // `COUNT(*):$1 AS auction_count` (a stray single colon, not a valid cast
+  // or a valid placeholder) as soon as PGLite/pg actually parsed it.
+  for (const match of statement.matchAll(/(?<!:):([a-z_]+)(!)?/g)) {
     const name = match[1]!;
     usedParamSet[name] = true;
-    params.push({ name, required: match[2] === "!", transform: { type: "scalar" }, locs: [{ a: match.index!, b: match.index! + match[0].length }] });
+    // `b` must be the last matched character's index (inclusive), not one
+    // past it: @pgtyped/runtime's replaceIntervals (preprocessor.js) does
+    // `str.slice(interval.b + offset + 1, ...)`, so an exclusive end here
+    // eats the character immediately after the parameter. That silently
+    // dropped the space between `:limit!` and `OFFSET` in listShadowBidAuctions,
+    // producing invalid SQL ("...$1OFFSET $2...") only once PGLite/pg is
+    // actually reachable, since prior runs never got this query to execute.
+    params.push({ name, required: match[2] === "!", transform: { type: "scalar" }, locs: [{ a: match.index!, b: match.index! + match[0].length - 1 }] });
   }
   return new PreparedQuery<P, R>({ usedParamSet, params, statement } as any);
 };

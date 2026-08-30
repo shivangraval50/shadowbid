@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { getAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
+  addressToBytes32,
   coordinatorResultDigest,
   createEip712AuthoritativeReader,
   toHexLedgerState,
@@ -39,7 +40,7 @@ function baseLedger(overrides: Partial<MidnightAuctionLedgerState> = {}): Midnig
     commitments_closed: true,
     auction_id: `0x${BigInt(auction.auctionId).toString(16).padStart(64, "0")}`,
     evm_chain_id: 31337n,
-    evm_auction: auction.evmContract,
+    evm_auction: addressToBytes32(auction.evmContract) as MidnightAuctionLedgerState["evm_auction"],
     midnight_network: auction.midnightDomain,
     midnight_contract: auction.midnightContract,
     commit_deadline: BigInt(Math.floor(Date.now() / 1000) - 60),
@@ -233,5 +234,12 @@ describe("ShadowBid EIP-712 coordinator result", () => {
     expect(adapted.auction_id).toBe(`0x${"01".repeat(32)}`);
     expect(adapted.commitment_1).toBe(`0x${"06".repeat(32)}`);
     expect(adapted.committed_1).toBe(false);
+  });
+
+  test("addressToBytes32 zero-left-pads a 20-byte EVM address into the 32-byte Bytes<32> encoding register_auction's caller must use", () => {
+    expect(addressToBytes32("0x1111111111111111111111111111111111111111")).toBe(`0x${"00".repeat(12)}${"11".repeat(20)}`);
+    // Case-insensitive input, lowercase output.
+    expect(addressToBytes32("0xAbCdEf0123456789AbCdEf0123456789aBcDeF01")).toBe(addressToBytes32("0xabcdef0123456789abcdef0123456789abcdef01"));
+    expect(addressToBytes32("0x0000000000000000000000000000000000dead")).toBe(`0x${"00".repeat(30)}dead`);
   });
 });

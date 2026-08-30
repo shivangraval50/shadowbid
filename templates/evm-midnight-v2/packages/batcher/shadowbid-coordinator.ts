@@ -243,7 +243,7 @@ export function createEip712AuthoritativeReader(options: {
       if (
         lower(ledger.auction_id) !== decimalToBytes32(auction.auctionId) ||
         String(ledger.evm_chain_id) !== auction.evmChainId ||
-        lower(ledger.evm_auction) !== lower(auction.evmContract) ||
+        lower(ledger.evm_auction) !== lower(addressToBytes32(auction.evmContract)) ||
         lower(ledger.midnight_network) !== lower(auction.midnightDomain) ||
         lower(ledger.midnight_contract) !== lower(auction.midnightContract)
       ) return null;
@@ -281,3 +281,15 @@ export function createEip712AuthoritativeReader(options: {
 function lower(value: string): string { return value.toLowerCase(); }
 /** Compact `register_auction` receives the EVM auction id as a zero-left-padded Bytes<32> (docs/DECISIONS.md). */
 function decimalToBytes32(value: string): string { return `0x${BigInt(value).toString(16).padStart(64, "0")}`; }
+/**
+ * `shadowbid.compact`'s `evm: Bytes<32>` parameter (register_auction) has no
+ * compiler-fixed encoding for a 20-byte EVM address — nothing in this
+ * repository calls `register_auction` yet, so no convention was previously
+ * established. This zero-left-pads the address the same way `abi.encode(address)`
+ * would and the same way the auction-id convention above already does; see
+ * the 2026-08-30 "EVM auction contract address encoding" decision in
+ * docs/DECISIONS.md. Whatever registers a real auction on Midnight must use
+ * this exact same encoding or this domain check will always fail closed.
+ */
+export function addressToBytes32(address: string): string { return `0x${stripHexPrefix(address).toLowerCase().padStart(64, "0")}`; }
+function stripHexPrefix(value: string): string { return value.startsWith("0x") ? value.slice(2) : value; }
