@@ -38,7 +38,7 @@ The final recorded gates are 42/42 orchestrated checks, 45/45 focused batcher/no
 
 ## Honest limitations and next steps
 
-The UI currently exposes no create, commit, close, open, or settle transaction controls. Compact lifecycle authority and global winner computation are not implemented. The coordinator is trusted and needs production controls such as multi-party approval, key management, rate limiting, and durable audit trails. Next steps are a proof-backed maximum protocol, scalable bidder storage, authenticated/timed lifecycle transitions, wallet writes, and a recorded private three-bidder settlement.
+The UI currently exposes no create, commit, close, open, or settle transaction controls. Compact lifecycle authority and global winner computation are not implemented. The coordinator is trusted and needs production controls such as multi-party approval, key management, rate limiting, and durable audit trails. Next steps are a proof-backed maximum protocol with deterministic tie rules and EVM-address binding, scalable bidder storage, authenticated/timed lifecycle transitions, wallet-backed UI writes, and production coordinator hardening.
 
 ## Built with
 
