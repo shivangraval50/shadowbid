@@ -1,3 +1,38 @@
+> ## 🕶️ Hackathon judges: the submission is **ShadowBid**, in [`templates/evm-midnight-v2/`](templates/evm-midnight-v2/)
+>
+> **ShadowBid — sealed-bid NFT auctions.** Bid amounts stay private on Midnight;
+> custody and the final outcome stay auditable on EVM.
+>
+> | Start here | |
+> | --- | --- |
+> | Project README | [`templates/evm-midnight-v2/README.md`](templates/evm-midnight-v2/README.md) |
+> | 2-minute demo script | [`docs/DEMO.md`](templates/evm-midnight-v2/docs/DEMO.md) |
+> | Architecture | [`docs/ARCHITECTURE.md`](templates/evm-midnight-v2/docs/ARCHITECTURE.md) |
+> | Privacy model | [`docs/PRIVACY.md`](templates/evm-midnight-v2/docs/PRIVACY.md) |
+> | Security + trust boundary | [`docs/SECURITY.md`](templates/evm-midnight-v2/docs/SECURITY.md) |
+> | Test evidence | [`docs/TEST_MATRIX.md`](templates/evm-midnight-v2/docs/TEST_MATRIX.md) |
+> | Screenshots | [`docs/screenshots/`](templates/evm-midnight-v2/docs/screenshots/) |
+>
+> ```sh
+> cd templates/evm-midnight-v2 && bun install --frozen-lockfile && bun run dev
+> # then open http://127.0.0.1:10599/
+> ```
+>
+> **Attribution:** everything outside `templates/evm-midnight-v2/` is the upstream
+> [EffectStream](https://github.com/effectstream/effectstream) engine
+> (Apache-2.0 / MIT), not work produced for this hackathon. The ShadowBid
+> submission is the contents of that one template directory.
+>
+> **Honest scope:** Midnight proves the commitment/opening lifecycle, **not** that
+> the winning bid was the highest. A trusted coordinator selects the winner and
+> signs an EIP-712 authorization; Ethereum verifies that authorization, not a
+> Midnight winner-computation proof. EffectStream is deterministic multi-chain
+> indexing, not a trustless bridge. The UI is read-only and the recorded run is
+> harness-driven. Full limitations in
+> [`docs/SUBMISSION_READY.md`](templates/evm-midnight-v2/docs/SUBMISSION_READY.md).
+
+---
+
 # Effectstream
 
 A multi-chain Web3 engine for building multi-chain dApps, infrastructure and onchain games.
