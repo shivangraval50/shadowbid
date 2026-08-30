@@ -137,7 +137,7 @@ contract ShadowBidAuctionTest {
         nft.approve(address(auction), 1);
         (bool badCommit,) = address(auction).call(abi.encodeCall(
             auction.createAuction,
-            (address(nft), 1, uint64(block.timestamp), uint64(block.timestamp + 1), uint128(1 ether), bytes32(uint256(7)))
+            (address(nft), 1, uint64(block.timestamp), uint64(block.timestamp + 1), uint128(1 ether), bytes32(uint256(7)), bytes32(uint256(31337)))
         ));
         _assertTrue(!badCommit);
 
