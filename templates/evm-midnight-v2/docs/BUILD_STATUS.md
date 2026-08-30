@@ -33,7 +33,7 @@ Last reviewed: 2026-08-30 (second pass, shadowbid/claude-settlement).
 - The coordinator CLI is a one-shot reference process, not a continuously polling service. It has no multi-party signoff, rate limiting, durable audit trail beyond the result file, or production key-management policy.
 - The UI is read-only: wallet-backed mint/list, create, commit, close, open, proving-status, and settlement writes are not implemented.
 - Compact does not compute a global maximum or produce a proof consumed directly by EVM. EVM does not directly verify a Midnight ZK winner-computation proof; winner/amount correctness remains a trusted coordinator claim.
-- No recorded private three-bidder 8/13/11 run through Midnight winner derivation, EffectStream transition, EVM settlement, and final NFT owner exists.
+- ~~No recorded private three-bidder 8/13/11 run exists.~~ **Resolved 2026-08-30**: executed live against the running stack — auction 6, three real ZK-proved private bids, coordinator-authorized `settle()`, `ownerOf(900006)` = winner, projection `SETTLED`/`winning_amount=13`, and losing bidders absent from every public surface. Full evidence table in [`TEST_MATRIX.md`](TEST_MATRIX.md). This records a real private-bid-to-final-owner execution; it still does not establish that 13 was the true maximum, which remains a trusted-coordinator claim.
 
 Do not describe the repository as an end-to-end settlement demo, trustless bridge, or proof-backed auction. EffectStream is deterministic indexing/read-model infrastructure, not settlement authority.
 

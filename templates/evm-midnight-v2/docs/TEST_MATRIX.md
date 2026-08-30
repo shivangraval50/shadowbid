@@ -16,7 +16,37 @@
 | Privacy integration | `packages/tests/stm/shadowbid-privacy.test.ts` through full runner | **PASS — API, DB, browser, and captured-log checks** |
 | Full orchestrated stack | `packages/tests/run-tests.ts` | **PASS — 41/41** (35 core + 6 wallet/browser) |
 | Independent browser smoke | `packages/tests/frontend/render.test.ts` | **PASS — 6/6**, zero console errors |
-| Complete private 3-bidder E2E | private Compact bids → winner computation → EVM settlement → final owner | **MISSING** — no proof-backed maximum or recorded end-to-end execution |
+| Complete private 3-bidder E2E | `packages/tests/shadowbid/live-three-bidder.ts` via `stm/shadowbid-live-e2e.test.ts` | **PASS — executed live 2026-08-30**; see "Recorded live 8/13/11 run" below. Winner selection is still a trusted-coordinator claim, not a proof-backed maximum. |
+
+## Recorded live 8/13/11 run (2026-08-30)
+
+Executed against a running `bun run dev` stack, with a freshly deployed Compact
+singleton (`register_auction` asserts `initialized == false`, so each run needs
+one). Bids 8, 13, and 11 were passed only as private Compact circuit arguments.
+
+| Step | Evidence |
+| --- | --- |
+| Fresh Compact singleton | `6be075185126bf1306648ed3012d7e9a8fc42619172fe68a8c21f48df3104070` |
+| Mint + escrow + create auction (EVM) | auction id `6`, token `900006`, seller `0x7099…79c8` |
+| Three private bids (real ZK proofs) | `commit_bid_0/1/2` proved and applied; ledger `committed=[true,true,true]`, `commitment_count=3` |
+| Close + open/consume (real ZK proofs) | ledger `commitments_closed=true`, `consumed=[true,true,true]` |
+| Public commitment hashes on EVM | `commitment_count: 3` on auction 6 via `recordCommitment` |
+| Coordinator authorization | `validateCoordinatorDecision` passed against the live closed ledger; EIP-712 signed by `settlementSigner` |
+| EVM settlement | `settle()` succeeded; `settlement_commitment 0x29dd97a3…de4d` |
+| Final NFT owner | `ownerOf(900006) = 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc` — matches the authorized winner |
+| EffectStream projection | auction 6 `phase=SETTLED`, `winner=0x3c44cddd…93bc`, `winning_amount="13"` |
+| Losing-bid privacy | Losing bidders `0x…0808` / `0x…1111` and `salt`/`opening`/`losing_amount` appear on **no** public surface: `/api/auctions`, `/api/auctions/{1..6}`, `/api/shadowbid/service-state`, `/api/shadowbid/demo-status`, `/api/erc721`, served frontend |
+
+Caveats, stated plainly:
+
+- `midnight_commitment_count` reads `0` on auction 6 because the already-running
+  sync process was started against the *previous* Compact address and does not
+  re-read the address file at runtime. The Midnight-side facts were verified
+  directly from the indexer via `LiveMidnightAuctionStateReader`, which is what
+  the E2E and the coordinator actually use. A stack started after this deploy
+  indexes them normally.
+- `13` being the maximum of `{8, 13, 11}` was decided by the test harness, not
+  proven on-chain. Nothing in this run establishes a proof-backed maximum.
 
 ## Commands
 
@@ -47,6 +77,6 @@ The tests validate contract controls, commitment privacy boundaries, determinist
 | Midnight commitment/opening privacy boundary | **PASS** | Compact suite 4/4; 3 fixed slots |
 | Public combined multi-chain state | **PASS** | EffectStream/API/DB/privacy checks |
 | Authenticated live-reader/coordinator handoff | **PASS** | Focused coordinator/reader suites |
-| Wallet-backed create/bid/close/open/settle UI | **MISSING** | Current dashboard is read-only |
-| Proof-backed winner computation | **MISSING** | Coordinator decides out-of-band |
-| Recorded 8/13/11 full E2E | **MISSING/BLOCKED** | Must not be claimed until executed and captured |
+| Wallet-backed create/bid/close/open/settle UI | **MISSING** | Dashboard is read-only; the harness drives writes, not the browser |
+| Proof-backed winner computation | **MISSING** | Coordinator decides out-of-band; no in-circuit maximum |
+| Recorded 8/13/11 full E2E | **PASS** | Executed and captured 2026-08-30 — see "Recorded live 8/13/11 run" above |

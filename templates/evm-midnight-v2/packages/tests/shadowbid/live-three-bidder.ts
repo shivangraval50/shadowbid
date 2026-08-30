@@ -263,7 +263,21 @@ export async function runLiveThreeBidderAuction(): Promise<LiveThreeBidderResult
   // Use the EVM's local test clock only to satisfy the same post-deadline rule
   // enforced by production settlement; the coordinator validation above used
   // real wall-clock time against finalized Midnight ledger data.
-  await publicClient.request({ method: "evm_setNextBlockTimestamp", params: [Number(commitDeadline + 1n)] });
+  //
+  // Only nudge the clock when the chain has NOT already moved past the commit
+  // deadline on its own. Compact proving and the three `recordCommitment`
+  // transactions each mine blocks, so by this point the chain has usually
+  // advanced past `commitDeadline` already; `evm_setNextBlockTimestamp` rejects
+  // any value at or below the latest block's timestamp, which previously failed
+  // the whole run at the final settlement step.
+  const beforeSettle = await publicClient.getBlock();
+  if (beforeSettle.timestamp <= commitDeadline) {
+    await publicClient.request({ method: "evm_setNextBlockTimestamp", params: [Number(commitDeadline + 1n)] });
+  } else if (beforeSettle.timestamp > settlementDeadline) {
+    throw new Error(
+      `EVM settlement window closed before settle(): block ${beforeSettle.timestamp} > settlementDeadline ${settlementDeadline}`,
+    );
+  }
   await waitForReceipt(publicClient, await winnerClient.writeContract({
     address: auction, abi: auctionAbi, functionName: "settle", value: decision.amount,
     args: [{ auctionId, winner: winner.address, amount: decision.amount, commitment: decision.commitment, midnightContract: decision.midnightContract, midnightNetwork: decision.midnightNetwork, resultVersion: 1n, expiry: decision.expiry, nonce: 0n }, envelope.signature],
