@@ -1,0 +1,58 @@
+## Verdict
+
+ShadowBid is a credible cross-chain architecture prototype, but not a completed cross-chain auction. Its strongest pieces are EVM custody controls, domain-bound Compact commitments, and an honest fail-closed trust boundary. Its decisive weakness is that no verified Midnight result currently affects settlement.
+
+### Ranked findings
+
+1. **Critical — Midnight does not determine the auction result.** Compact verifies individual commitment openings, but never compares bids, identifies the maximum, binds a winning Midnight bidder to an EVM address, or publishes an authenticated result. The EVM contract accepts whatever winner and amount the trusted signer authorizes. [shadowbid.compact:38](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact:38), [ShadowBidAuction.sol:126](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-evm/src/contracts/ShadowBidAuction.sol:126)
+
+2. **High — There is no operational cross-chain settlement path.** Result publication is unconditionally rejected and batching always returns `null`; both dev and mainnet readers also return `null`. Thus Midnight cannot cause an EVM settlement through the shipped system. [shadowbid-settlement.ts:147](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/batcher/shadowbid-settlement.ts:147), [shadowbid-settlement.ts:168](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/batcher/shadowbid-settlement.ts:168), [batcher.dev.ts:27](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/batcher/batcher.dev.ts:27), [batcher.mainnet.ts:27](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/batcher/batcher.mainnet.ts:27)
+
+3. **High — The settlement signer is a unilateral integrity and availability authority.** It can record arbitrary commitments and authorize a collaborator as winner at any reserve-compliant price. Compromise or dishonesty defeats auction correctness, although the collaborator must provide exact payment. The signer can also prevent early seller cancellation by recording one commitment. This is documented trust, not an unintended signature bypass. [ShadowBidAuction.sol:113](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-evm/src/contracts/ShadowBidAuction.sol:113), [ShadowBidAuction.sol:126](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-evm/src/contracts/ShadowBidAuction.sol:126), [ShadowBidAuction.sol:158](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-evm/src/contracts/ShadowBidAuction.sol:158)
+
+4. **Medium — Compact lifecycle timing and authority are not enforced.** Anyone can close commitments at any time, while commit and settlement deadlines are stored but never checked by the circuits. The security documentation correctly warns not to treat these flags as authority. [shadowbid.compact:33](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact:33), [shadowbid.compact:53](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact:53), [SECURITY.md:14](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/SECURITY.md:14)
+
+5. **Medium — No proof-capable, end-to-end test exists.** The current build uses `--skip-zk`; ShadowBid’s full cross-chain flow was not rerun, and the privacy tests primarily establish absence of named fields rather than cryptographic secrecy or rendered-runtime non-leakage. [BUILD_STATUS.md:13](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/BUILD_STATUS.md:13), [TEST_MATRIX.md:5](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/TEST_MATRIX.md:5), [shadowbid.contract.test.ts:4](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-midnight/contract-shadowbid/src/shadowbid.contract.test.ts:4)
+
+6. **Medium — Submission documentation materially contradicts the final code.** The README still says two slots and unwired ShadowBid deployment, diagrams a nonexistent result-publication circuit, and describes “selected published result” fields that were removed. `BUILD_STATUS` also claims coordinator-result publication and nine circuits; the Compact source exposes eight circuits and no result publication. [README.md:5](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/README.md:5), [README.md:21](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/README.md:21), [README.md:59](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/README.md:59), [README.md:68](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/README.md:68), [BUILD_STATUS.md:7](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/BUILD_STATUS.md:7), [shadowbid.compact:33](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact:33)
+
+## Answers
+
+1. **Is it genuinely cross-chain?**  
+   At the infrastructure/read-model level, yes: contracts are deployed and public facts from EVM and Midnight are correlated. At the protocol/outcome level, no: there is no bridge, proof verification, atomic execution, or working Midnight-to-EVM settlement. Call it a “cross-chain indexed prototype,” not a completed cross-chain auction. [config.dev.ts:128](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/node/config.dev.ts:128), [config.dev.ts:195](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/node/config.dev.ts:195)
+
+2. **Is Midnight genuinely necessary?**  
+   Not to the current executable settlement path. A conventional commitment database or EVM commit-reveal design could currently replace it without changing settlement semantics. Midnight becomes necessary only if its proof establishes valid openings and correct winner selection in a form the settlement authority actually consumes.
+
+3. **Are privacy claims accurate?**  
+   Narrow claims are accurate: salts and opening inputs are not disclosed by Compact, and losing amounts are absent from the projection schema/API. Broader “bid amounts stay private” language needs qualification: transaction metadata, slots, counts, hashes and nullifiers are public; the winning amount becomes public on EVM settlement; runtime cryptographic privacy has not been exercised with real proving keys. [PRIVACY.md:3](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/PRIVACY.md:3), [ShadowBidAuction.sol:154](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/contracts-evm/src/contracts/ShadowBidAuction.sol:154), [App.tsx:24](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/packages/frontend/client/src/App.tsx:24)
+
+4. **Are there exploitable settlement flaws?**  
+   No obvious permissionless replay, reentrancy, underpayment, early-settlement, or double-settlement exploit was found. The principal flaw is trusted-authority abuse or compromise, not a signature-verification bypass. The fail-closed batcher currently prevents live settlement rather than exposing it.
+
+5. **Does the demo prove the project?**  
+   No. It proves deployment/read infrastructure, public correlation, source structure, and a privacy-conscious dashboard. It does not prove private bid execution, ZK proof generation, highest-bid correctness, authenticated publication, or settlement. The demo document is candid about that. [DEMO.md:1](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/DEMO.md:1)
+
+6. **Does documentation match implementation?**  
+   The concise architecture, privacy, security, handoff and demo documents mostly do. The README, `BUILD_STATUS`, `DEVPOST`, and `SUBMISSION_READY` contain stale pre-remediation statements. Notably, the latter still says the circuit has two slots and ShadowBid deployment is unselected. [SUBMISSION_READY.md:11](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/SUBMISSION_READY.md:11), [DEVPOST.md:17](/Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream/templates/evm-midnight-v2/docs/DEVPOST.md:17)
+
+7. **What could cause rejection or downscoring?**
+
+   - Calling it end-to-end, trustless, or proof-backed.
+   - A demo with no auction writes, private bid transaction, proof, or settlement.
+   - Midnight appearing ornamental because the signer alone decides EVM outcomes.
+   - Fixed capacity of only three bids.
+   - No authenticated/timed Compact lifecycle or highest-bid proof.
+   - Contradictory submission-facing documentation.
+   - Only baseline/reference 41-test evidence and `--skip-zk`, rather than a final ShadowBid integration run.
+   - Production-looking `batcher.mainnet.ts` that is intentionally incapable of processing ShadowBid results.
+
+## Five highest-value final improvements
+
+1. Implement a proof-backed winner-selection circuit that verifies all eligible openings, enforces deterministic highest-bid/tie rules, and binds the winner to an explicitly encoded EVM address.
+2. Implement the finalized EVM/Midnight/result-authority reader and make its authenticated result drive EVM settlement—ideally through on-chain proof verification or a clearly specified threshold/attested bridge.
+3. Produce one recorded end-to-end run: escrow → three real private commitments → close → proofs/openings → winner derivation → EVM settlement → proceeds withdrawal.
+4. Reconcile every submission-facing document and diagram with the final eight-circuit, three-slot, fail-closed implementation.
+5. Replace fixed slots and unauthenticated lifecycle transitions with scalable commitment storage plus reviewed authorization/time semantics.
+
+No files were edited and no claims are based on a newly executed test run.
