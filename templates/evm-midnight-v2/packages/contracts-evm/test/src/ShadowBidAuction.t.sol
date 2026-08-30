@@ -44,7 +44,7 @@ contract ShadowBidAuctionTest {
         vm.prank(seller);
         nft.approve(address(auction), 2);
         vm.prank(seller);
-        uint256 expiredId = auction.createAuction(address(nft), 2, uint64(block.timestamp + 10), uint64(block.timestamp + 20), 1 ether, bytes32(uint256(7)));
+        uint256 expiredId = auction.createAuction(address(nft), 2, uint64(block.timestamp + 10), uint64(block.timestamp + 20), 1 ether, bytes32(uint256(7)), bytes32(uint256(31337)));
         vm.warp(block.timestamp + 21);
         auction.cancel(expiredId);
         _assertEq(nft.ownerOf(2), seller);
@@ -65,10 +65,11 @@ contract ShadowBidAuctionTest {
             midnightContract: bytes32(uint256(7)),
             midnightNetwork: bytes32(uint256(31337)),
             resultVersion: 1,
-            expiry: block.timestamp + 100,
+            expiry: block.timestamp + 300,
             nonce: 0
         });
         bytes memory signature = _sign(auth);
+        _closeCommitPhase();
         vm.prank(winner);
         auction.settle{value: 1 ether}(auth, signature);
         _assertEq(nft.ownerOf(1), winner);
@@ -79,7 +80,7 @@ contract ShadowBidAuctionTest {
         _assertTrue(!ok);
     }
 
-    function testRejectsForgedWinnerWrongDomainAndPrematureSettlement() public {
+    function testRejectsForgedWinnerWrongDomainAndSettlementBeforeCommitClose() public {
         setUp();
         uint256 id = _create();
         bytes32 commitment = keccak256("midnight-commitment");
@@ -98,7 +99,10 @@ contract ShadowBidAuctionTest {
 
         setUp();
         id = _create();
-        auth.auctionId = id;
+        vm.prank(vm.addr(SIGNER_KEY));
+        auction.recordCommitment(id, commitment);
+        auth = _authorization(id, winner, 1 ether, commitment, block.timestamp + 100);
+        signature = _sign(auth);
         vm.prank(winner);
         (bool premature,) = address(auction).call{value: 1 ether}(abi.encodeCall(auction.settle, (auth, signature)));
         _assertTrue(!premature);
@@ -207,8 +211,9 @@ contract ShadowBidAuctionTest {
         vm.stopPrank();
         _assertEq(auction.commitmentCount(id), 3);
 
-        ShadowBidAuction.SettlementAuthorization memory auth = _authorization(id, bidder13, 13 ether, bid13, block.timestamp + 100);
+        ShadowBidAuction.SettlementAuthorization memory auth = _authorization(id, bidder13, 13 ether, bid13, block.timestamp + 300);
         bytes memory signature = _sign(auth);
+        _closeCommitPhase();
         vm.prank(bidder13);
         auction.settle{value: 13 ether}(auth, signature);
         _assertEq(nft.ownerOf(1), bidder13);
@@ -219,7 +224,39 @@ contract ShadowBidAuctionTest {
         vm.prank(seller);
         nft.approve(address(auction), 1);
         vm.prank(seller);
-        return auction.createAuction(address(nft), 1, uint64(block.timestamp + 100), uint64(block.timestamp + 200), 1 ether, bytes32(uint256(7)));
+        return auction.createAuction(address(nft), 1, uint64(block.timestamp + 100), uint64(block.timestamp + 200), 1 ether, bytes32(uint256(7)), bytes32(uint256(31337)));
+    }
+
+    function testSettlementRequiresCommitDeadlineAndExactMidnightNetwork() public {
+        setUp();
+        uint256 id = _create();
+        bytes32 commitment = keccak256("commitment");
+        vm.prank(vm.addr(SIGNER_KEY));
+        auction.recordCommitment(id, commitment);
+        ShadowBidAuction.SettlementAuthorization memory auth = _authorization(id, winner, 1 ether, commitment, block.timestamp + 200);
+        bytes memory signature = _sign(auth);
+
+        vm.warp(block.timestamp + 100);
+        vm.prank(winner);
+        (bool atDeadline,) = address(auction).call{value: 1 ether}(abi.encodeCall(auction.settle, (auth, signature)));
+        _assertTrue(!atDeadline);
+
+        vm.warp(block.timestamp + 1);
+        auth.midnightNetwork = bytes32(uint256(1));
+        signature = _sign(auth);
+        vm.prank(winner);
+        (bool wrongNetwork,) = address(auction).call{value: 1 ether}(abi.encodeCall(auction.settle, (auth, signature)));
+        _assertTrue(!wrongNetwork);
+
+        auth.midnightNetwork = bytes32(uint256(31337));
+        signature = _sign(auth);
+        vm.prank(winner);
+        auction.settle{value: 1 ether}(auth, signature);
+        _assertEq(nft.ownerOf(1), winner);
+    }
+
+    function _closeCommitPhase() private {
+        vm.warp(block.timestamp + 101);
     }
 
     function _sign(ShadowBidAuction.SettlementAuthorization memory auth) private returns (bytes memory) {

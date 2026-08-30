@@ -36,14 +36,14 @@ CREATE TABLE shadowbid_auctions (
   settlement_deadline BIGINT NOT NULL,
   reserve_price TEXT NOT NULL,
   midnight_domain TEXT NOT NULL,
-  phase TEXT NOT NULL CHECK (phase IN ('COMMIT', 'SETTLEMENT_READY', 'SETTLED', 'CANCELLED')),
+  phase TEXT NOT NULL CHECK (phase IN ('COMMIT', 'COMMITMENT_CORRELATED', 'SETTLED', 'CANCELLED')),
   commitment_count INTEGER NOT NULL DEFAULT 0,
   midnight_commitment_count INTEGER NOT NULL DEFAULT 0,
   settlement_commitment TEXT,
   winner TEXT,
   winning_amount TEXT,
   terminal_source_key TEXT,
-  settlement_ready BOOLEAN NOT NULL DEFAULT FALSE,
+  commitment_correlated BOOLEAN NOT NULL DEFAULT FALSE,
   updated_source_key TEXT NOT NULL
 );
 

@@ -38,12 +38,6 @@ export type ImpureCircuits<PS> = {
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
-  publish_coordinator_result(context: __compactRuntime.CircuitContext<PS>,
-                             winner__0: Uint8Array,
-                             commitment_0: Uint8Array,
-                             amount_0: bigint,
-                             digest_0: Uint8Array,
-                             nonce_0: bigint): Promise<__compactRuntime.CircuitResults<PS, []>>;
 }
 
 export type ProvableCircuits<PS> = {
@@ -81,12 +75,6 @@ export type ProvableCircuits<PS> = {
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
-  publish_coordinator_result(context: __compactRuntime.CircuitContext<PS>,
-                             winner__0: Uint8Array,
-                             commitment_0: Uint8Array,
-                             amount_0: bigint,
-                             digest_0: Uint8Array,
-                             nonce_0: bigint): Promise<__compactRuntime.CircuitResults<PS, []>>;
 }
 
 export type PureCircuits = {
@@ -127,18 +115,11 @@ export type Circuits<PS> = {
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
-  publish_coordinator_result(context: __compactRuntime.CircuitContext<PS>,
-                             winner__0: Uint8Array,
-                             commitment_0: Uint8Array,
-                             amount_0: bigint,
-                             digest_0: Uint8Array,
-                             nonce_0: bigint): Promise<__compactRuntime.CircuitResults<PS, []>>;
 }
 
 export type Ledger = {
   readonly initialized: boolean;
   readonly commitments_closed: boolean;
-  readonly settled: boolean;
   readonly auction_id: Uint8Array;
   readonly protocol_version: bigint;
   readonly evm_chain_id: bigint;
@@ -160,11 +141,6 @@ export type Ledger = {
   readonly consumed_0: boolean;
   readonly consumed_1: boolean;
   readonly consumed_2: boolean;
-  readonly winner: Uint8Array;
-  readonly winning_commitment: Uint8Array;
-  readonly winning_amount: bigint;
-  readonly settlement_digest: Uint8Array;
-  readonly settlement_nonce: bigint;
 }
 
 export type ContractReferenceLocations = any;

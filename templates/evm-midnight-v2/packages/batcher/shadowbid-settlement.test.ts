@@ -48,9 +48,9 @@ async function adapter(stateReader = reader()) {
 afterEach(async () => { await Promise.all(paths.splice(0).map((path) => rm(path, { recursive: true, force: true }))); });
 
 describe("ShadowBid settlement envelope", () => {
-  test("accepts a canonical, authenticated-path-ready settlement request", async () => {
+  test("fails closed while the unauthenticated Midnight publication circuit is disabled", async () => {
     const target = await adapter();
-    expect(await target.validateInput(input())).toEqual({ valid: true });
+    expect(await target.validateInput(input())).toMatchObject({ valid: false, error: "Midnight result publication is disabled pending authenticated coordinator support" });
   });
 
   test("rejects unknown fields, malformed JSON, wrong method, wrong target, and expiry", async () => {
@@ -66,24 +66,25 @@ describe("ShadowBid settlement envelope", () => {
   test("rejects forged winner/result, wrong auction, unknown commitment, and premature state", async () => {
     const forged = await adapter();
     const forgedResult = await forged.validateInput(input({ ...envelope(), payload: { ...payload, winner: "0x9999999999999999999999999999999999999999" } }));
-    expect(forgedResult.valid).toBe(false); expect(forgedResult.error).toContain("winner/result");
+    expect(forgedResult).toMatchObject({ valid: false, error: "Midnight result publication is disabled pending authenticated coordinator support" });
     const wrongAuction = await adapter();
     expect(await wrongAuction.validateInput(input({ ...envelope(), auction: { ...auction, auctionId: "8" } }))).toMatchObject({ valid: false });
     const wrongDomain = await adapter();
-    expect(await wrongDomain.validateInput(input({ ...envelope(), auction: { ...auction, midnightDomain: `0x${"99".repeat(32)}` } }))).toMatchObject({ valid: false, error: "wrong auction domain" });
+    expect(await wrongDomain.validateInput(input({ ...envelope(), auction: { ...auction, midnightDomain: `0x${"99".repeat(32)}` } }))).toMatchObject({ valid: false });
     const premature = await adapter({ async getSettlementReadyState() { return null; } });
-    expect(await premature.validateInput(input())).toMatchObject({ valid: false, error: "auction is not authoritatively settlement-ready" });
+    expect(await premature.validateInput(input())).toMatchObject({ valid: false });
     const unknownCommitment = await adapter(reader({ ...payload, commitment: `0x${"88".repeat(32)}` }));
     expect(await unknownCommitment.validateInput(input())).toMatchObject({ valid: false });
   });
 
-  test("durably rejects request IDs and auction nonces after restart", async () => {
+  test("replay claims are idempotent for the same envelope and reject a conflicting nonce", async () => {
     const directory = await mkdtemp(`${tmpdir()}/shadowbid-batcher-`); paths.push(directory);
-    const first = new ShadowBidSettlementAdapter(inner, reader(), new DurableReplayGuard(directory));
-    expect(await first.validateInput(input())).toEqual({ valid: true });
-    const restarted = new ShadowBidSettlementAdapter(inner, reader(), new DurableReplayGuard(directory));
-    expect(await restarted.validateInput(input())).toMatchObject({ valid: false, error: "duplicate request ID or settlement nonce" });
+    const guard = new DurableReplayGuard(directory);
+    const first = envelope();
+    expect(await guard.claim(first)).toBe(true);
+    const restarted = new DurableReplayGuard(directory);
+    expect(await restarted.claim(first)).toBe(true);
     const changedId = envelope({ requestId: "request_identifier_0002" });
-    expect(await restarted.validateInput(input(changedId))).toMatchObject({ valid: false, error: "duplicate request ID or settlement nonce" });
+    expect(await restarted.claim(changedId)).toBe(false);
   });
 });

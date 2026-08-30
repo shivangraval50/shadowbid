@@ -23,10 +23,10 @@ const cancelled = (): ShadowBidFact => ({
   auction_id: "1", fact_kind: "evm.auction_cancelled", semantic_key: null, block_height: 14, payload: { auctionId: "1" },
 });
 
-test("EVM and Midnight commitment facts make an auction settlement-ready", () => {
+test("EVM and Midnight commitment facts are correlated, not settlement-ready", () => {
   const view = reduceAuctionFacts([created(), evmCommit(), midnightCommit()]);
-  expect(view?.phase).toBe("SETTLEMENT_READY");
-  expect(view?.settlement_ready).toBe(true);
+  expect(view?.phase).toBe("COMMITMENT_CORRELATED");
+  expect(view?.commitment_correlated).toBe(true);
   expect(view?.commitment_count).toBe(1);
   expect(view?.midnight_commitment_count).toBe(1);
 });
