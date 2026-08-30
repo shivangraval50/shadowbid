@@ -138,6 +138,39 @@
       }
     },
     {
+      "name": "commit_bid_2",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "bidder",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "amount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
+          }
+        },
+        {
+          "name": "salt",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
       "name": "close_commitments",
       "pure": false,
       "proof": true,
@@ -184,6 +217,39 @@
     },
     {
       "name": "open_and_consume_1",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "bidder",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "amount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
+          }
+        },
+        {
+          "name": "salt",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "open_and_consume_2",
       "pure": false,
       "proof": true,
       "arguments": [
@@ -398,8 +464,8 @@
     {
       "name": "settlement_deadline",
       "index": [
-        1,
-        0
+        0,
+        10
       ],
       "exported": true,
       "storage": "Cell",
@@ -411,8 +477,8 @@
     {
       "name": "commitment_count",
       "index": [
-        1,
-        1
+        0,
+        11
       ],
       "exported": true,
       "storage": "Counter"
@@ -420,8 +486,8 @@
     {
       "name": "commitment_0",
       "index": [
-        1,
-        2
+        0,
+        12
       ],
       "exported": true,
       "storage": "Cell",
@@ -433,8 +499,21 @@
     {
       "name": "commitment_1",
       "index": [
+        0,
+        13
+      ],
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "commitment_2",
+      "index": [
         1,
-        3
+        0
       ],
       "exported": true,
       "storage": "Cell",
@@ -447,7 +526,7 @@
       "name": "committed_0",
       "index": [
         1,
-        4
+        1
       ],
       "exported": true,
       "storage": "Cell",
@@ -459,7 +538,19 @@
       "name": "committed_1",
       "index": [
         1,
-        5
+        2
+      ],
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Boolean"
+      }
+    },
+    {
+      "name": "committed_2",
+      "index": [
+        1,
+        3
       ],
       "exported": true,
       "storage": "Cell",
@@ -471,7 +562,7 @@
       "name": "nullifier_0",
       "index": [
         1,
-        6
+        4
       ],
       "exported": true,
       "storage": "Cell",
@@ -484,7 +575,20 @@
       "name": "nullifier_1",
       "index": [
         1,
-        7
+        5
+      ],
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "nullifier_2",
+      "index": [
+        1,
+        6
       ],
       "exported": true,
       "storage": "Cell",
@@ -497,7 +601,7 @@
       "name": "consumed_0",
       "index": [
         1,
-        8
+        7
       ],
       "exported": true,
       "storage": "Cell",
@@ -507,6 +611,18 @@
     },
     {
       "name": "consumed_1",
+      "index": [
+        1,
+        8
+      ],
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Boolean"
+      }
+    },
+    {
+      "name": "consumed_2",
       "index": [
         1,
         9

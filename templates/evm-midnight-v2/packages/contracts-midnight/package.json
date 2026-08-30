@@ -9,7 +9,7 @@
     "midnight-indexer:wait": "wait-on tcp:8088",
     "midnight-proof-server:start": "RUST_BACKTRACE=full SUBSTRATE_NODE_WS_URL=\"ws://localhost:9944\" bun ./node_modules/.bin/npm-midnight-proof-server",
     "midnight-proof-server:wait": "wait-on tcp:6300",
-    "midnight-contract:clean": "rm -rf midnight-level-db && rm -f contract.json contract-round-value.undeployed.json",
+    "midnight-contract:clean": "rm -rf midnight-level-db && rm -f contract.json contract-round-value.undeployed.json contract-shadowbid.undeployed.json",
     "midnight-contract:deploy": "bun run midnight-contract:clean && bun run deploy.ts"
   },
   "dependencies": {

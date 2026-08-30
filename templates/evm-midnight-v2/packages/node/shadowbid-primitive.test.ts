@@ -33,6 +33,17 @@ test("Midnight primitive forwards only a public commitment record", () => {
   });
 });
 
+test("Midnight primitive joins a canonical Bytes32 EVM auction id and latest slot", () => {
+  const primitive = new ShadowBidMidnightPrimitive({
+    instanceName: "midnight", contractAddress: "midnight-contract", networkId: "undeployed",
+    stateMachinePrefix: undefined,
+  });
+  const result = primitive.getPayload(12 as any, evmTx({
+    auction_id: `0x${"00".repeat(31)}07`, commitment_count: "3", committed_2: true, commitment_2: "0xthird",
+  }) as any).next().value;
+  expect(result.data[0].accountingPayload.payload).toEqual({ auctionId: "7", commitment: "0xthird" });
+});
+
 test("Midnight primitive ignores malformed or non-public payloads", () => {
   const primitive = new ShadowBidMidnightPrimitive({
     instanceName: "midnight", contractAddress: "midnight-contract", networkId: "undeployed",

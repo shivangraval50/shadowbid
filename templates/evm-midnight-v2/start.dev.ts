@@ -14,16 +14,24 @@ export default {
     ),
     ...launchEvm("@evm-midnight/contracts-evm", { cwd: path.join(root, "packages/contracts-evm") }),
     {
-      name: "midnight-contract-compile",
-      description: "Compile Compact contract (compact compile +0.33.0-rc.2)",
+      name: "midnight-counter-compile",
+      description: "Compile reference Counter Compact contract",
       cwd: path.join(root, "packages/contracts-midnight/contract-round-value"),
+      args: ["run", "compact"],
+      waitToExit: true,
+      critical: true,
+    },
+    {
+      name: "midnight-shadowbid-compile",
+      description: "Compile ShadowBid Compact contract",
+      cwd: path.join(root, "packages/contracts-midnight/contract-shadowbid"),
       args: ["run", "compact"],
       waitToExit: true,
       critical: true,
     },
     ...launchMidnight("@evm-midnight/contracts-midnight", { cwd: path.join(root, "packages/contracts-midnight") }, {
           env: { MIDNIGHT_STORAGE_PASSWORD: "YourPasswordMy1!" },
-          dependsOn: ["midnight-contract-compile"],
+          dependsOn: ["midnight-counter-compile", "midnight-shadowbid-compile"],
     }),
 
     {
