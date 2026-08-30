@@ -32,6 +32,7 @@
     "@effectstream/evm-hardhat": "0.200.1",
     "@effectstream/log": "0.200.1",
     "@wagmi/cli": "2.3.1",
+    "@nomicfoundation/hardhat-ignition": "3.0.2",
     "@nomicfoundation/hardhat-ignition-viem": "3.0.2",
     "@nomicfoundation/hardhat-viem": "3.0.0",
     "@nomicfoundation/ignition-core": "3.0.2",

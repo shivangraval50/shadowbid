@@ -3,7 +3,6 @@ import type { Client } from "pg";
 import { readFile } from "node:fs/promises";
 
 const API_PORT = parseInt(process.env["EFFECTSTREAM_API_PORT"] || "9999", 10);
-const FRONTEND_URL = process.env["FRONTEND_URL"] || "http://127.0.0.1:10599/";
 const PRIVATE_FIELD = /(?:salt|opening|losing[_-]?amount|private[_-]?amount)/i;
 
 function assertPublic(value: unknown): boolean {
@@ -34,15 +33,6 @@ export async function shadowBidPrivacyTest(db: Client) {
     (rows) => rows.every((row: any) => assertPublic(row.payload)),
     (rows) => assertPublic(rows),
   );
-
-  await assert("ShadowBid browser output does not disclose private bid fields", async () => {
-    try {
-      const response = await fetch(FRONTEND_URL);
-      return response.ok && assertPublic(await response.text());
-    } catch {
-      return false;
-    }
-  });
 
   await assert("ShadowBid configured logs do not disclose private bid fields", async () => {
     const paths = (process.env["SHADOWBID_LOG_PATHS"] || "").split(",").filter(Boolean);

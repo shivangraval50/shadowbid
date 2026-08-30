@@ -56,20 +56,20 @@ export async function walletConnectTest() {
       waitUntil: "load",
       timeout: 15_000,
     });
-    await page.waitForSelector(".wallet-demo-section", { timeout: 10_000 });
+    await page.waitForSelector(".app-shell", { timeout: 10_000 });
 
-    // The status bar should show "Connect EVM" button
+    // The ShadowBid header should expose the unified wallet entrypoint.
     await assert(
-      "Frontend: status bar shows Connect EVM button",
+      "Frontend: header shows Connect wallet button",
       async () => {
-        const btn = await page.$(".evm-chip .status-connect-btn");
-        return btn !== null;
+        const btn = await page.$(".connect-button");
+        return (await btn?.textContent())?.includes("Connect wallet") ?? false;
       },
     );
 
-    // Click Connect EVM → modal opens
-    await assert("Frontend: clicking Connect EVM opens wallet modal", async () => {
-      const btn = await page.$(".evm-chip .status-connect-btn");
+    // Click the unified entrypoint → modal opens.
+    await assert("Frontend: clicking Connect wallet opens wallet modal", async () => {
+      const btn = await page.$(".connect-button");
       if (!btn) return false;
       await btn.click();
       await page.waitForSelector(".wallet-modal-overlay", { timeout: 5_000 });
@@ -110,70 +110,9 @@ export async function walletConnectTest() {
       return true;
     });
 
-    // Verify Midnight connect button is present
-    await assert(
-      "Frontend: status bar shows Connect Midnight button",
-      async () => {
-        const btn = await page.$(".midnight-chip .status-connect-btn");
-        return btn !== null;
-      },
-    );
-
-    // Verify the cards title is rendered
-    await assert("Frontend: cards title renders correctly", async () => {
-      const title = await page.$(".cards-title");
-      if (!title) return false;
-      const text = await title.textContent();
-      return text?.includes("Merged EVM ERC721") ?? false;
+    await assert("Frontend: ShadowBid auction registry remains rendered", async () => {
+      return (await page.$(".auction-section")) !== null;
     });
-
-    // Verify refresh button is in the card
-    await assert("Frontend: refresh button present in card", async () => {
-      const btn = await page.$(".tokens-cards-container .refresh-button");
-      return btn !== null;
-    });
-
-    // Wait for token cards to load from the API (polls every 5s)
-    await assert(
-      "Frontend: token cards render from API data",
-      async () => {
-        await page.waitForSelector(".token-card", { timeout: 15_000 });
-        const cards = await page.$$(".token-card");
-        return cards.length > 0;
-      },
-    );
-
-    // Verify token #100 (minted in Phase C) appears
-    await assert(
-      "Frontend: token #100 card is visible",
-      async () => {
-        const names = await page.$$eval(".card-token-name", (els) =>
-          els.map((el) => el.textContent ?? ""),
-        );
-        return names.some((t) => t.includes("#100") || t.includes("100"));
-      },
-    );
-
-    // Verify the Midnight property from Phase D renders on token #100's card
-    await assert(
-      "Frontend: token #100 shows testProp property from Midnight",
-      async () => {
-        const cards = await page.$$(".token-card");
-        for (const card of cards) {
-          const name = await card.$eval(".card-token-name", (el) => el.textContent ?? "").catch(() => "");
-          if (!name.includes("100")) continue;
-          const keys = await card.$$eval(".property-key", (els) =>
-            els.map((el) => (el.textContent ?? "").replace(":", "").trim()),
-          );
-          const values = await card.$$eval(".property-value", (els) =>
-            els.map((el) => (el.textContent ?? "").trim()),
-          );
-          const idx = keys.indexOf("testProp");
-          if (idx >= 0 && values[idx] === "testValue") return true;
-        }
-        return false;
-      },
-    );
   } finally {
     await browser.close();
     proc.kill();

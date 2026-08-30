@@ -3,6 +3,9 @@ import path from "path";
 import { chromium } from "playwright-core";
 
 const FRONTEND_PORT = 10599;
+// Match serialized private-data keys/attributes, not explanatory copy such as
+// "bid openings are never exposed" that documents the privacy boundary.
+const PRIVATE_DATA = /(?:["'](?:salt|opening|losing[_-]?amount|private[_-]?amount)["']\s*:|data-(?:salt|opening|losing-amount|private-amount)=)/i;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -66,20 +69,24 @@ export async function frontendRenderTest() {
     page.on("pageerror", (err) => jsErrors.push(err.message));
 
     await page.goto(`http://localhost:${FRONTEND_PORT}/`, { waitUntil: "load", timeout: 15_000 });
-    await page.waitForSelector(".container", { timeout: 10_000 });
+    await page.waitForSelector(".app-shell", { timeout: 10_000 });
 
-    await assert("Frontend React app mounts (container rendered)", async () => {
-      const container = await page.$(".container");
+    await assert("ShadowBid browser output does not disclose private bid fields", async () => {
+      return !PRIVATE_DATA.test(await page.content());
+    });
+
+    await assert("Frontend React app mounts (application shell rendered)", async () => {
+      const container = await page.$(".app-shell");
       return container !== null;
     });
 
-    await assert("Frontend renders header with title", async () => {
-      const title = await page.textContent("h1.title");
-      return title !== null && title.includes("Midnight/EVM");
+    await assert("Frontend renders ShadowBid header", async () => {
+      const title = await page.textContent("button.brand");
+      return title !== null && title.replace(/\s+/g, "").includes("SHADOWBID");
     });
 
-    await assert("Frontend renders wallet demo section", async () => {
-      const section = await page.$(".wallet-demo-section");
+    await assert("Frontend renders the auction registry", async () => {
+      const section = await page.$(".auction-section");
       return section !== null;
     });
 

@@ -2,6 +2,7 @@ import { anyError, printSummary } from "./helpers.ts";
 import type { Client } from "pg";
 import pg from "pg";
 import path from "path";
+import { createWriteStream, type WriteStream } from "node:fs";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -17,15 +18,32 @@ const CLI_PATH = path.resolve(import.meta.dirname!, "../../node_modules/@effects
 const LAUNCHER_PATH = path.resolve(import.meta.dirname!, "./start.test.ts");
 
 let orchestratorProc: ReturnType<typeof Bun.spawn> | null = null;
+let orchestratorLog: WriteStream | null = null;
+
+async function mirrorOutput(
+  stream: ReadableStream<Uint8Array>,
+  destination: NodeJS.WriteStream,
+  log: WriteStream,
+): Promise<void> {
+  for await (const chunk of stream) {
+    destination.write(chunk);
+    log.write(chunk);
+  }
+}
 
 async function startInfrastructure(): Promise<void> {
   console.log("Starting test infrastructure...");
+  const logPath = `/tmp/evm-midnight-v2-orchestrator-${process.pid}.log`;
+  process.env["SHADOWBID_LOG_PATHS"] = logPath;
+  orchestratorLog = createWriteStream(logPath, { flags: "w", mode: 0o600 });
   orchestratorProc = Bun.spawn(["bun", CLI_PATH, "start", LAUNCHER_PATH], {
     cwd: path.resolve(import.meta.dirname!, "../.."),
-    stdout: "inherit",
-    stderr: "inherit",
+    stdout: "pipe",
+    stderr: "pipe",
     env: { ...process.env },
   });
+  void mirrorOutput(orchestratorProc.stdout, process.stdout, orchestratorLog);
+  void mirrorOutput(orchestratorProc.stderr, process.stderr, orchestratorLog);
 }
 
 async function stopInfrastructure(): Promise<void> {
@@ -36,6 +54,7 @@ async function stopInfrastructure(): Promise<void> {
   } catch { /* already down */ }
   await delay(2000);
   orchestratorProc?.kill();
+  orchestratorLog?.end();
 }
 
 async function waitForOrchestrator(): Promise<void> {
