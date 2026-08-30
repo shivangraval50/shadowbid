@@ -37,3 +37,11 @@ bun run test                                                      # 29 passed, 2
 ```
 
 Port ownership was checked (`lsof -nP -iTCP:5432,8545,9944,8088,6300,3334,9999,10599,4747 -sTCP:LISTEN`) before every `bun run test` invocation; no listeners were found before any run, and none remained after each run's orchestrator shutdown — no process belonging to another worktree was ever at risk of being touched.
+
+## Final validation update — 2026-08-30
+
+- Integration privacy: API, database, captured-log, and live-browser checks all pass in the appropriate lifecycle phases.
+- Final full orchestrated run: `bun run test` exits **0** with **35/35 core assertions plus 6/6 wallet/browser assertions passing (41 total checks)**.
+- Current ShadowBid wallet/registry browser smoke also passes **6/6** independently.
+- Persistent launch: all critical services remained healthy; real browser load succeeded with zero console errors.
+- Reproducibility: `bun install --frozen-lockfile` passes with Hardhat Ignition declared directly.

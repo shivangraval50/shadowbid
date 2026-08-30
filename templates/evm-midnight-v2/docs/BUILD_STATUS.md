@@ -37,3 +37,11 @@ Last reviewed: 2026-08-30 (second pass, shadowbid/claude-settlement).
 - No coordinator-decision authorization layer beyond "holds the private key" exists (e.g., no multi-party signoff, no rate limiting, no decision audit log beyond the file store itself) — the coordinator CLI is a minimal reference implementation of the trust boundary already documented, not a hardened production service.
 
 Do not describe the repository as an end-to-end settlement demo, trustless bridge, or proof-backed auction. Winner/amount correctness is an authenticated (EIP-712, cryptographically verified against live Midnight ledger state) but still trusted coordinator claim, not a proof and not a computed result. The operational path — live Midnight reads, coordinator signing, batcher validation — is now wired and passes 29/31 orchestrated tests plus 45/45 focused unit tests; see docs/CLAUDE_SETTLEMENT_REPORT.md for the full account and exact commands.
+
+## Final validation superseding the stale status above — 2026-08-30
+
+The two test-infrastructure gaps listed above are fixed: browser privacy runs in Phase E with the live frontend, while the orchestrator captures stdout/stderr to an ephemeral per-run file supplied through `SHADOWBID_LOG_PATHS`. Hardhat Ignition is a direct exact dependency rather than a transient symlink.
+
+The final complete `bun run test` rerun exits **0**: **35 core assertions plus 6 wallet/browser assertions pass (41 total checks)** across infrastructure, deployment, proving, database/API privacy, cross-chain state, Midnight property submission, frontend build, browser rendering, wallet-modal behavior, and fatal-JS checks. Checkpoint `8cb92fbe` aligns the legacy wallet test with the current unified ShadowBid wallet modal/auction registry.
+
+Persistent `bun run dev` validation confirmed every critical service remained running, EffectStream continued finalizing blocks, all health probes passed, and the application loaded in the in-app browser without console errors. Remaining production hardening is limited to the explicitly documented trusted-coordinator operational controls (multi-party approval, rate limiting, durable audit trail, and key management); those are not claimed by this reference template.

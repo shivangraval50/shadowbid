@@ -120,3 +120,17 @@ The untouched EVM + Midnight reference application was launched with `bun run de
 - Disk headroom after startup/builds: approximately 10 GiB free.
 
 The earlier full suite remains green at **41/41 tests**, and both Compact/Midnight and Forge/EVM builds pass. The only observed runtime warnings are the non-blocking items documented above, plus duplicate `@polkadot/util` version diagnostics from the reference dependency graph and occasional local-node trie-cache/indexer slow-operation warnings under build load.
+
+## ShadowBid persistent validation — 2026-08-30
+
+- Branch: `shadowbid-build`; implementation/test-infrastructure checkpoint: `8cb92fbe` (including merged Claude commits `7cd6a36c` and `e9095e43`).
+- Architecture remains the intended trusted-coordinator reference model: live Midnight ledger reads and EIP-712 coordinator authentication are implemented; winner/amount correctness is not represented as a trustless proof.
+- `bun install --frozen-lockfile` succeeds. `@nomicfoundation/hardhat-ignition` is now a direct exact dependency, eliminating the non-reproducible `node_modules` symlink repair.
+- The final complete `bun run test` rerun exits **0**: **35/35 core registered assertions plus 6/6 wallet/browser assertions pass (41 total checks)**. The stale legacy wallet selector was updated to the current ShadowBid wallet/registry UI and verified both narrowly and in full orchestration.
+- Persistent `bun run dev` validation ran for more than five minutes. PGLite, Hardhat/EVM, Midnight node, indexer, proof server, EffectStream sync, batcher, and frontend all remained running. EffectStream advanced beyond finalized block 200 with all protocol states `ok` and zero database/producer error counters.
+- Midnight `system_health`: `isSyncing: false`, `shouldHavePeers: false`. Proof server and EffectStream health: `status: ok`. Frontend: HTTP 200.
+- The in-app browser loaded `http://127.0.0.1:10599/`, rendered the ShadowBid header, operational status, auction registry, and privacy model, with zero browser console errors.
+- The stack was shut down through the orchestrator API after validation; `bun run dev` reports exit 1 only for that intentional API-triggered shutdown.
+
+Exact successful launch command: `bun run dev`
+Local frontend URL: `http://127.0.0.1:10599/`
