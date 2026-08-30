@@ -35,7 +35,7 @@ test("Midnight primitive forwards only a public commitment record", () => {
 
 test("Midnight primitive joins a canonical Bytes32 EVM auction id and latest slot", () => {
   const primitive = new ShadowBidMidnightPrimitive({
-    instanceName: "midnight", contractAddress: "midnight-contract", networkId: "undeployed",
+    instanceName: "midnight-slot-join", contractAddress: "midnight-contract", networkId: "undeployed",
     stateMachinePrefix: undefined,
   });
   const result = primitive.getPayload(12 as any, evmTx({
@@ -57,4 +57,21 @@ test("Midnight primitive ignores malformed or non-public payloads", () => {
 test("EVM ABI exposes no private bid opening fields", () => {
   const serialized = JSON.stringify(shadowBidAuctionAbi);
   expect(serialized).not.toMatch(/salt|opening|losingAmount/i);
+});
+
+// Regression test: every ShadowBidMidnightPrimitive/ShadowBidAuctionPrimitive
+// constructed above must use a distinct instanceName. Primitive's constructor
+// registers itself in @effectstream/sm's process-global PrimitiveRegistry
+// (globalThis.EFFECTSTREAM_REGISTRY), which throws on a reused instanceName —
+// this previously broke the "joins a canonical Bytes32..." test above because
+// it reused the literal "midnight" instanceName already taken by "ignores
+// malformed or non-public payloads". The fix was giving each test its own
+// name, not weakening PrimitiveRegistry's duplicate check, which is correct
+// production behavior (a real EffectStream node must not silently double-register
+// a primitive instance).
+test("PrimitiveRegistry rejects a reused instanceName (documents the constructor's global registration)", () => {
+  const uniqueName = `regression-check-${Date.now()}-${Math.random()}`;
+  new ShadowBidMidnightPrimitive({ instanceName: uniqueName, contractAddress: "midnight-contract", networkId: "undeployed", stateMachinePrefix: undefined });
+  expect(() => new ShadowBidMidnightPrimitive({ instanceName: uniqueName, contractAddress: "midnight-contract", networkId: "undeployed", stateMachinePrefix: undefined }))
+    .toThrow(`Primitive ${uniqueName} already exists`);
 });

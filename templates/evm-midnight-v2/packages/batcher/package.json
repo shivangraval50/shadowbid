@@ -4,12 +4,16 @@
   "exports": "./batcher.dev.ts",
   "scripts": {
     "start": "bun run batcher.dev.ts",
-    "start:mainnet": "bun run batcher.mainnet.ts"
+    "start:mainnet": "bun run batcher.mainnet.ts",
+    "coordinator": "bun run shadowbid-coordinator-cli.ts"
   },
   "dependencies": {
     "@effectstream/batcher-sdk": "0.200.1",
+    "@effectstream/midnight-contracts": "0.200.1",
     "@evm-midnight/contracts-evm": "workspace:*",
     "@evm-midnight/shadowbid-midnight-contract": "workspace:*",
-    "effection": "^3.5.0"
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "5.0.0-beta.6",
+    "effection": "^3.5.0",
+    "viem": "2.37.3"
   }
 }

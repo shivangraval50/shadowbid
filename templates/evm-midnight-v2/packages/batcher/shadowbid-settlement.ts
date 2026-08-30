@@ -149,9 +149,13 @@ export class ShadowBidSettlementAdapter<T> implements BlockchainAdapter<T> {
       if (input.target !== SHADOWBID_TARGET_V1) throw new Error("ShadowBid requires explicit target=shadowbid");
       const envelope = parseShadowBidEnvelope(input.input);
       // Compact v0.25 has no contract-recognized caller/capability primitive in
-      // this template. The public result circuit is intentionally absent until
-      // an authenticated coordinator circuit is implemented and reviewed.
-      throw new Error("Midnight result publication is disabled pending authenticated coordinator support");
+      // this template, so there is intentionally no on-chain Midnight result
+      // circuit (see shadowbid.contract.test.ts, which pins the circuit count
+      // at 8). `this.stateReader` instead authenticates the coordinator result
+      // off-chain (EIP-712, see shadowbid-coordinator.ts) and cross-checks it
+      // against finalized Midnight ledger state before ever returning
+      // SETTLEMENT_READY. A reader that is unset, unreachable, or has no
+      // result for this auction returns null here, and this method fails closed.
       const state = await this.stateReader.getSettlementReadyState(envelope.auction);
       if (!state || state.phase !== "SETTLEMENT_READY" || !state.commitmentsClosed) throw new Error("auction is not authoritatively settlement-ready");
       if (Date.now() > state.settlementDeadlineMs || envelope.expiresAt > String(state.settlementDeadlineMs)) throw new Error("auction or request has expired");

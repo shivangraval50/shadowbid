@@ -1,4 +1,5 @@
 node_modules
 contract.json
 contract-round-value.*.json
+contract-shadowbid.*.json
 midnight-level-db
