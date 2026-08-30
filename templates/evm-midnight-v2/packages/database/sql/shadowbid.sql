@@ -22,13 +22,13 @@ INSERT INTO shadowbid_auctions (
   midnight_contract_address, seller, nft_address, token_id, commit_deadline,
   settlement_deadline, reserve_price, midnight_domain, phase, commitment_count,
   midnight_commitment_count, settlement_commitment, winner, winning_amount,
-  terminal_source_key, settlement_ready, updated_source_key
+  terminal_source_key, commitment_correlated, updated_source_key
 ) VALUES (
   :auction_id!, :evm_chain_id!, :evm_contract_address!, :midnight_network_id,
   :midnight_contract_address, :seller!, :nft_address!, :token_id!, :commit_deadline!,
   :settlement_deadline!, :reserve_price!, :midnight_domain!, :phase!, :commitment_count!,
   :midnight_commitment_count!, :settlement_commitment, :winner, :winning_amount,
-  :terminal_source_key, :settlement_ready!, :updated_source_key!
+  :terminal_source_key, :commitment_correlated!, :updated_source_key!
 )
 ON CONFLICT (auction_id) DO UPDATE SET
   evm_chain_id = EXCLUDED.evm_chain_id,
@@ -49,7 +49,7 @@ ON CONFLICT (auction_id) DO UPDATE SET
   winner = EXCLUDED.winner,
   winning_amount = EXCLUDED.winning_amount,
   terminal_source_key = EXCLUDED.terminal_source_key,
-  settlement_ready = EXCLUDED.settlement_ready,
+  commitment_correlated = EXCLUDED.commitment_correlated,
   updated_source_key = EXCLUDED.updated_source_key;
 
 /* @name upsertShadowBidCommitment */
@@ -75,7 +75,7 @@ ORDER BY commitment ASC, protocol ASC;
 SELECT
   COUNT(*)::int AS auction_count,
   COUNT(*) FILTER (WHERE phase = 'COMMIT')::int AS commit_count,
-  COUNT(*) FILTER (WHERE phase = 'SETTLEMENT_READY')::int AS settlement_ready_count,
+  COUNT(*) FILTER (WHERE phase = 'COMMITMENT_CORRELATED')::int AS commitment_correlated_count,
   COUNT(*) FILTER (WHERE phase = 'SETTLED')::int AS settled_count,
   COUNT(*) FILTER (WHERE phase = 'CANCELLED')::int AS cancelled_count
 FROM shadowbid_auctions;

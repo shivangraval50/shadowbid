@@ -20,10 +20,10 @@ const AuctionSchema = Type.Object({
   auction_id: Type.String(), evm_chain_id: Type.String(), evm_contract_address: Type.String(),
   midnight_network_id: Type.Union([Type.String(), Type.Null()]), midnight_contract_address: Type.Union([Type.String(), Type.Null()]),
   seller: Type.String(), nft_address: Type.String(), token_id: Type.String(), commit_deadline: Type.String(), settlement_deadline: Type.String(),
-  reserve_price: Type.String(), midnight_domain: Type.String(), phase: Type.Union([Type.Literal("COMMIT"), Type.Literal("SETTLEMENT_READY"), Type.Literal("SETTLED"), Type.Literal("CANCELLED")]),
+  reserve_price: Type.String(), midnight_domain: Type.String(), phase: Type.Union([Type.Literal("COMMIT"), Type.Literal("COMMITMENT_CORRELATED"), Type.Literal("SETTLED"), Type.Literal("CANCELLED")]),
   commitment_count: Type.Number(), midnight_commitment_count: Type.Number(), settlement_commitment: Type.Union([Type.String(), Type.Null()]),
   winner: Type.Union([Type.String(), Type.Null()]), winning_amount: Type.Union([Type.String(), Type.Null()]), terminal_source_key: Type.Union([Type.String(), Type.Null()]),
-  settlement_ready: Type.Boolean(), updated_source_key: Type.String(),
+  commitment_correlated: Type.Boolean(), updated_source_key: Type.String(),
 });
 export const apiRouter: StartConfigApiRouter = async function (
   server: FastifyInstance,
@@ -61,6 +61,6 @@ export const apiRouter: StartConfigApiRouter = async function (
 
   server.get("/api/shadowbid/service-state", async () => {
     const [state] = await runPreparedQuery(shadowBidServiceState.run(undefined, dbConn), "/api/shadowbid/service-state");
-    return state ?? { auction_count: 0, commit_count: 0, settlement_ready_count: 0, settled_count: 0, cancelled_count: 0 };
+    return state ?? { auction_count: 0, commit_count: 0, commitment_correlated_count: 0, settled_count: 0, cancelled_count: 0 };
   });
 };

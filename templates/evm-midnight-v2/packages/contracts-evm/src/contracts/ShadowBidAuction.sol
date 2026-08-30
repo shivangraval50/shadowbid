@@ -19,7 +19,8 @@ contract ShadowBidAuction is IERC721Receiver, EIP712, ReentrancyGuard {
         uint64 commitDeadline;
         uint64 settlementDeadline;
         uint128 reservePrice;
-        bytes32 midnightDomain;
+        bytes32 midnightContract;
+        bytes32 midnightNetwork;
         bool commitmentRecorded;
         Phase phase;
     }
@@ -52,7 +53,7 @@ contract ShadowBidAuction is IERC721Receiver, EIP712, ReentrancyGuard {
     address private expectedNft;
     uint256 private expectedTokenId;
 
-    event AuctionCreated(uint256 indexed auctionId, address indexed seller, address indexed nft, uint256 tokenId, uint64 commitDeadline, uint64 settlementDeadline, uint128 reservePrice, bytes32 midnightDomain);
+    event AuctionCreated(uint256 indexed auctionId, address indexed seller, address indexed nft, uint256 tokenId, uint64 commitDeadline, uint64 settlementDeadline, uint128 reservePrice, bytes32 midnightContract, bytes32 midnightNetwork);
     event CommitmentRecorded(uint256 indexed auctionId, bytes32 indexed commitment);
     event AuctionSettled(uint256 indexed auctionId, address indexed winner, uint256 amount, bytes32 indexed commitment, bytes32 settlementDigest);
     event AuctionCancelled(uint256 indexed auctionId, address indexed caller, bool timedOut);
@@ -81,9 +82,10 @@ contract ShadowBidAuction is IERC721Receiver, EIP712, ReentrancyGuard {
         uint64 commitDeadline,
         uint64 settlementDeadline,
         uint128 reservePrice,
-        bytes32 midnightDomain
+        bytes32 midnightContract,
+        bytes32 midnightNetwork
     ) external nonReentrant returns (uint256 auctionId) {
-        if (nft == address(0) || midnightDomain == bytes32(0)) revert InvalidAddress();
+        if (nft == address(0) || midnightContract == bytes32(0) || midnightNetwork == bytes32(0)) revert InvalidAddress();
         if (commitDeadline <= block.timestamp || settlementDeadline <= commitDeadline) revert InvalidDeadline();
 
         auctionId = nextAuctionId++;
@@ -94,7 +96,8 @@ contract ShadowBidAuction is IERC721Receiver, EIP712, ReentrancyGuard {
             commitDeadline: commitDeadline,
             settlementDeadline: settlementDeadline,
             reservePrice: reservePrice,
-            midnightDomain: midnightDomain,
+            midnightContract: midnightContract,
+            midnightNetwork: midnightNetwork,
             commitmentRecorded: false,
             phase: Phase.Commit
         });
@@ -104,7 +107,7 @@ contract ShadowBidAuction is IERC721Receiver, EIP712, ReentrancyGuard {
         IERC721(nft).safeTransferFrom(msg.sender, address(this), tokenId);
         expectedNft = address(0);
 
-        emit AuctionCreated(auctionId, msg.sender, nft, tokenId, commitDeadline, settlementDeadline, reservePrice, midnightDomain);
+        emit AuctionCreated(auctionId, msg.sender, nft, tokenId, commitDeadline, settlementDeadline, reservePrice, midnightContract, midnightNetwork);
     }
 
     /// @notice Records that the trusted coordinator observed an eligible Midnight commitment.
@@ -122,12 +125,12 @@ contract ShadowBidAuction is IERC721Receiver, EIP712, ReentrancyGuard {
 
     function settle(SettlementAuthorization calldata authorization, bytes calldata signature) external payable nonReentrant {
         Auction storage auction = auctions[authorization.auctionId];
-        if (auction.phase != Phase.Commit || block.timestamp > auction.settlementDeadline) revert InvalidPhase();
+        if (auction.phase != Phase.Commit || block.timestamp <= auction.commitDeadline || block.timestamp > auction.settlementDeadline) revert InvalidPhase();
         if (authorization.winner == address(0) || authorization.amount < auction.reservePrice) revert InvalidSettlement();
         if (authorization.expiry < block.timestamp) revert SettlementExpired();
         if (authorization.nonce != nextSettlementNonce[authorization.auctionId]) revert SettlementReplay();
         if (!recordedCommitments[authorization.auctionId][authorization.commitment]) revert InvalidCommitment();
-        if (authorization.midnightContract != auction.midnightDomain || authorization.midnightNetwork == bytes32(0) || authorization.resultVersion != 1) revert InvalidSettlement();
+        if (authorization.midnightContract != auction.midnightContract || authorization.midnightNetwork != auction.midnightNetwork || authorization.resultVersion != 1) revert InvalidSettlement();
         if (msg.sender != authorization.winner || msg.value != authorization.amount) revert IncorrectPayment();
 
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(

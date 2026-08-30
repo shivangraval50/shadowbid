@@ -13,7 +13,7 @@ export const shadowBidEvmGrammar = [
 export const shadowBidAuctionAbi = [
   { type: "event", name: "AuctionCreated", anonymous: false, inputs: [
     { indexed: true, name: "auctionId", type: "uint256" }, { indexed: true, name: "seller", type: "address" }, { indexed: true, name: "nft", type: "address" },
-    { indexed: false, name: "tokenId", type: "uint256" }, { indexed: false, name: "commitDeadline", type: "uint64" }, { indexed: false, name: "settlementDeadline", type: "uint64" }, { indexed: false, name: "reservePrice", type: "uint128" }, { indexed: false, name: "midnightDomain", type: "bytes32" },
+    { indexed: false, name: "tokenId", type: "uint256" }, { indexed: false, name: "commitDeadline", type: "uint64" }, { indexed: false, name: "settlementDeadline", type: "uint64" }, { indexed: false, name: "reservePrice", type: "uint128" }, { indexed: false, name: "midnightContract", type: "bytes32" }, { indexed: false, name: "midnightNetwork", type: "bytes32" },
   ] },
   { type: "event", name: "CommitmentRecorded", anonymous: false, inputs: [
     { indexed: true, name: "auctionId", type: "uint256" }, { indexed: true, name: "commitment", type: "bytes32" },

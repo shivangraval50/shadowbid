@@ -19,9 +19,9 @@ export async function shadowBidPrivacyTest(db: Client) {
   });
 
   await assert("ShadowBid API output does not disclose private bid fields", async () => {
-    for (const path of ["/api/erc721", "/api/shadowbid"]) {
+    for (const path of ["/api/erc721", "/api/auctions", "/api/shadowbid/service-state"]) {
       const response = await fetch(`http://127.0.0.1:${API_PORT}${path}`);
-      if (response.status === 404) continue;
+      if (!response.ok) return false;
       if (!assertPublic(await response.text())) return false;
     }
     return true;
@@ -30,23 +30,23 @@ export async function shadowBidPrivacyTest(db: Client) {
   await assertSQL(
     "ShadowBid database state has no private bid columns or values",
     db,
-    `SELECT table_name, column_name FROM information_schema.columns
-     WHERE table_name LIKE 'shadowbid_%' ORDER BY table_name, column_name`,
-    (rows) => rows.every((row: any) => !PRIVATE_FIELD.test(row.column_name)),
+    `SELECT payload FROM shadowbid_source_facts ORDER BY source_key`,
+    (rows) => rows.every((row: any) => assertPublic(row.payload)),
     (rows) => assertPublic(rows),
   );
 
   await assert("ShadowBid browser output does not disclose private bid fields", async () => {
     try {
       const response = await fetch(FRONTEND_URL);
-      return !response.ok || assertPublic(await response.text());
+      return response.ok && assertPublic(await response.text());
     } catch {
-      return true;
+      return false;
     }
   });
 
   await assert("ShadowBid configured logs do not disclose private bid fields", async () => {
     const paths = (process.env["SHADOWBID_LOG_PATHS"] || "").split(",").filter(Boolean);
+    if (paths.length === 0) return false;
     for (const path of paths) {
       if (!assertPublic(await readFile(path, "utf8"))) return false;
     }

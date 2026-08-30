@@ -63,7 +63,8 @@ export interface AuthoritativeSettlementReader {
   ): Promise<SettlementReadyState | null>;
 }
 
-type ReplayFile = { version: 1; keys: Record<string, { acceptedAt: number; requestHash: string }> };
+type ReplayClaim = { expiresAt: number; requestHash: string };
+type ReplayFile = { version: 2; keys: Record<string, ReplayClaim> };
 
 /** A small append-independent registry; processed queue entries may disappear, replay keys never do. */
 export class DurableReplayGuard {
@@ -79,9 +80,15 @@ export class DurableReplayGuard {
       const state = await this.read();
       const auctionKey = `${envelope.auction.evmChainId}:${envelope.auction.evmContract.toLowerCase()}:${envelope.auction.auctionId}`;
       const keys = [`request:${envelope.requestId}`, `nonce:${auctionKey}:${envelope.payload.nonce}`];
-      if (keys.some((key) => state.keys[key])) return false;
       const requestHash = createHash("sha256").update(canonicalJson(envelope)).digest("hex");
-      for (const key of keys) state.keys[key] = { acceptedAt: Date.now(), requestHash };
+      const now = Date.now();
+      for (const [key, claim] of Object.entries(state.keys)) if (claim.expiresAt <= now) delete state.keys[key];
+      const existing = keys.map((key) => state.keys[key]).filter((claim): claim is ReplayClaim => claim != null);
+      // Validation can run more than once before a batch is submitted. An
+      // identical envelope is idempotent; a conflicting request or nonce is not.
+      if (existing.length > 0) return existing.length === keys.length && existing.every((claim) => claim.requestHash === requestHash);
+      const expiresAt = Number(envelope.expiresAt);
+      for (const key of keys) state.keys[key] = { expiresAt, requestHash };
       await mkdir(this.file.slice(0, this.file.lastIndexOf("/")), { recursive: true });
       const tmp = `${this.file}.${randomUUID()}.tmp`;
       await writeFile(tmp, JSON.stringify(state), { mode: 0o600 });
@@ -96,10 +103,10 @@ export class DurableReplayGuard {
   private async read(): Promise<ReplayFile> {
     try {
       const parsed = JSON.parse(await readFile(this.file, "utf8")) as ReplayFile;
-      if (parsed.version !== 1 || !parsed.keys || typeof parsed.keys !== "object") throw new Error("invalid replay registry");
+      if (parsed.version !== 2 || !parsed.keys || typeof parsed.keys !== "object") throw new Error("invalid replay registry");
       return parsed;
     } catch (error: any) {
-      if (error?.code === "ENOENT") return { version: 1, keys: {} };
+      if (error?.code === "ENOENT") return { version: 2, keys: {} };
       throw error;
     }
   }
@@ -141,6 +148,10 @@ export class ShadowBidSettlementAdapter<T> implements BlockchainAdapter<T> {
     try {
       if (input.target !== SHADOWBID_TARGET_V1) throw new Error("ShadowBid requires explicit target=shadowbid");
       const envelope = parseShadowBidEnvelope(input.input);
+      // Compact v0.25 has no contract-recognized caller/capability primitive in
+      // this template. The public result circuit is intentionally absent until
+      // an authenticated coordinator circuit is implemented and reviewed.
+      throw new Error("Midnight result publication is disabled pending authenticated coordinator support");
       const state = await this.stateReader.getSettlementReadyState(envelope.auction);
       if (!state || state.phase !== "SETTLEMENT_READY" || !state.commitmentsClosed) throw new Error("auction is not authoritatively settlement-ready");
       if (Date.now() > state.settlementDeadlineMs || envelope.expiresAt > String(state.settlementDeadlineMs)) throw new Error("auction or request has expired");
@@ -155,11 +166,11 @@ export class ShadowBidSettlementAdapter<T> implements BlockchainAdapter<T> {
   }
 
   buildBatchData(inputs: DefaultBatcherInput[], options?: BatchBuildingOptions): BatchBuildingResult<T> | null {
-    // The generated Midnight adapter only understands {circuit,args}; secrets
-    // are absent because this endpoint never accepts commit/open operations.
-    const converted = inputs.map((input) => ({ ...input, input: toMidnightCall(parseShadowBidEnvelope(input.input)) }));
-    const result = this.inner.buildBatchData(converted, options);
-    return result && { ...result, selectedInputs: inputs.filter((input) => result.selectedInputs.some((selected: DefaultBatcherInput) => selected.timestamp === input.timestamp && selected.address === input.address && selected.input === toMidnightCall(parseShadowBidEnvelope(input.input)))) };
+    // There is deliberately no fallback raw-circuit call while publication is
+    // disabled. Keeping this fail-closed prevents a future queue/config change
+    // from reviving the removed unauthenticated Compact circuit.
+    void inputs; void options;
+    return null;
   }
   submitBatch(data: T, fee: string | bigint): Promise<BlockchainHash> { return this.inner.submitBatch(data, fee); }
   estimateBatchFee(data: T): Promise<string | bigint> | string | bigint { return this.inner.estimateBatchFee(data); }
@@ -172,9 +183,6 @@ export class ShadowBidSettlementAdapter<T> implements BlockchainAdapter<T> {
   getRateLimitKeyStrategy() { return "ip-and-address" as const; }
 }
 
-function toMidnightCall(e: ShadowBidEnvelopeV1): string {
-  return canonicalJson({ circuit: "publish_coordinator_result", args: [e.payload.winner, e.payload.commitment, e.payload.amount, e.payload.settlementDigest, e.payload.nonce] });
-}
 function sameAuction(a: ShadowBidEnvelopeV1["auction"], b: ShadowBidEnvelopeV1["auction"]): boolean { return canonicalJson(normalize(a)) === canonicalJson(normalize(b)); }
 function sameResult(a: ShadowBidEnvelopeV1["payload"], b: ShadowBidEnvelopeV1["payload"]): boolean { return canonicalJson(normalize(a)) === canonicalJson(normalize(b)); }
 function normalize<T>(value: T): T { return JSON.parse(canonicalJson(value).replace(/0x[0-9a-fA-F]+/g, (v) => v.toLowerCase())); }

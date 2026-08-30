@@ -19,11 +19,11 @@ Wait for `Server listening on http://127.0.0.1:10599`, then open [http://127.0.0
 | --- | --- | --- |
 | 0:00–0:15 | Say: “ShadowBid keeps bid openings private while EVM custody and cross-chain state remain auditable.” | Explain EVM → EffectStream → Midnight. |
 | 0:15–0:35 | Show the dashboard and click `Auctions`, then `Privacy model`. | Read-only cards, phase/counts, “Amounts are never exposed”. |
-| 0:35–0:50 | Open an auction card if one is indexed. | Public seller/token/deadline/commitment count; reserve and openings remain hidden. |
+| 0:35–0:50 | Open an auction card if one is indexed. | Public seller/token/deadline/reserve/commitment count; bid openings remain hidden. |
 | 0:50–1:05 | Open `/api/auctions/:id` and `/api/shadowbid/service-state`. | Commitments are hashes/public records; no salt/opening/losing amount fields. |
-| 1:05–1:25 | Show `packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact` and its privacy test. | `persistentCommit`, no `disclose(salt)`, lifecycle circuits; state honestly says two slots. |
+| 1:05–1:25 | Show `packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact` and its privacy test. | `persistentCommit`, no `disclose(salt)`, three lifecycle slots; result publication is disabled pending coordinator authentication. |
 | 1:25–1:45 | Show `ShadowBidAuction.sol` and the EVM test names. | Escrow, signer authorization, exact payment, replay/cancel protections. |
-| 1:45–2:00 | Show `docs/BUILD_STATUS.md`. | Explain that frontend writes, three-bid support, ShadowBid sync wiring, and settlement reader remain incomplete. |
+| 1:45–2:00 | Show `docs/BUILD_STATUS.md` and `docs/SECURITY_REVIEW.md`. | Explain that frontend writes and an authenticated, proof-capable settlement path remain incomplete. |
 
 ## Fallback
 

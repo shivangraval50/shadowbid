@@ -8,7 +8,6 @@ struct Nullifier { version: Uint<32>; chain: Uint<64>; evm: Bytes<32>; auction: 
 // and salt) stays private because it is never passed to disclose().
 export ledger initialized: Boolean;
 export ledger commitments_closed: Boolean;
-export ledger settled: Boolean;
 export ledger auction_id: Bytes<32>;
 export ledger protocol_version: Uint<32>;
 export ledger evm_chain_id: Uint<64>;
@@ -30,11 +29,6 @@ export ledger nullifier_2: Bytes<32>;
 export ledger consumed_0: Boolean;
 export ledger consumed_1: Boolean;
 export ledger consumed_2: Boolean;
-export ledger winner: Bytes<32>;
-export ledger winning_commitment: Bytes<32>;
-export ledger winning_amount: Uint<64>;
-export ledger settlement_digest: Bytes<32>;
-export ledger settlement_nonce: Uint<64>;
 
 export circuit register_auction(id: Bytes<32>, version: Uint<32>, chain: Uint<64>, evm: Bytes<32>, network: Bytes<32>, midnight: Bytes<32>, commit_by: Uint<64>, settle_by: Uint<64>): [] {
   assert(initialized == false, "registered"); assert(commit_by < settle_by, "deadlines");
@@ -71,9 +65,4 @@ export circuit open_and_consume_2(bidder: Bytes<32>, amount: Uint<64>, salt: Byt
   assert(commitments_closed == true, "open"); assert(consumed_2 == false, "consumed");
   const bid = Bid { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount }; assert(persistentCommit<Bid>(bid, salt) == commitment_2, "opening");
   const n = Nullifier { version: protocol_version, chain: evm_chain_id, evm: evm_auction, auction: auction_id, network: midnight_network, midnight: midnight_contract, bidder: bidder, amount: amount, salt: salt }; nullifier_2 = disclose(persistentHash<Nullifier>(n)); consumed_2 = true;
-}
-export circuit publish_coordinator_result(winner_: Bytes<32>, commitment: Bytes<32>, amount: Uint<64>, digest: Bytes<32>, nonce: Uint<64>): [] {
-  const public_commitment = disclose(commitment);
-  assert(commitments_closed == true, "open"); assert(settled == false, "settled"); assert(public_commitment == commitment_0 || public_commitment == commitment_1 || public_commitment == commitment_2, "unknown");
-  winner = disclose(winner_); winning_commitment = public_commitment; winning_amount = disclose(amount); settlement_digest = disclose(digest); settlement_nonce = disclose(nonce); settled = true;
 }

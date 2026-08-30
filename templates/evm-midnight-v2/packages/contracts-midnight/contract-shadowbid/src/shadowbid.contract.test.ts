@@ -17,7 +17,7 @@ describe("ShadowBid Compact privacy boundary", () => {
     expect(source).toContain("persistentHash<Nullifier>");
   });
 
-  test("exposes both private-bid lifecycle paths and public result handling", () => {
+  test("exposes private-bid lifecycle paths but no unauthenticated result publication", () => {
     for (const circuit of [
       "register_auction",
       "commit_bid_0",
@@ -25,12 +25,11 @@ describe("ShadowBid Compact privacy boundary", () => {
       "close_commitments",
       "open_and_consume_0",
       "open_and_consume_1",
-      "publish_coordinator_result",
     ]) {
       expect(source).toContain(`export circuit ${circuit}`);
     }
-    expect(source).toContain("assert(public_commitment == commitment_0 || public_commitment == commitment_1");
-    expect(source).toContain("assert(settled == false");
+    expect(source).not.toContain("publish_coordinator_result");
+    expect(source).not.toContain("winning_amount");
   });
 
   test("supports the deterministic three-bidder flow required by the protocol", () => {

@@ -135,7 +135,7 @@ export const config = new ConfigBuilder()
           stateMachinePrefix: "shadowBidEvm",
           chainId: "31337",
           eventKind: "evm.auction_created",
-          abi: getEvmEvent(shadowBidAuctionAbi, "AuctionCreated(uint256,address,address,uint256,uint64,uint64,uint128,bytes32)"),
+          abi: getEvmEvent(shadowBidAuctionAbi, "AuctionCreated(uint256,address,address,uint256,uint64,uint64,uint128,bytes32,bytes32)"),
         } as any),
       )
       .addPrimitive(

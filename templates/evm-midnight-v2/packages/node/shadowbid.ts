@@ -20,7 +20,7 @@ export type ShadowBidFact = {
   payload: Record<string, unknown>;
 };
 
-export type AuctionPhaseV1 = "COMMIT" | "SETTLEMENT_READY" | "SETTLED" | "CANCELLED";
+export type AuctionPhaseV1 = "COMMIT" | "COMMITMENT_CORRELATED" | "SETTLED" | "CANCELLED";
 
 export type AuctionViewV1 = {
   auction_id: string;
@@ -42,7 +42,7 @@ export type AuctionViewV1 = {
   winner: string | null;
   winning_amount: string | null;
   terminal_source_key: string | null;
-  settlement_ready: boolean;
+  commitment_correlated: boolean;
   updated_source_key: string;
 };
 
@@ -74,7 +74,9 @@ export function reduceAuctionFacts(facts: readonly ShadowBidFact[]): AuctionView
   const cancelled = all.find((fact) => fact.fact_kind === "evm.auction_cancelled");
   const matchingCommitment = [...evmCommitments].some((commitment) => midnightCommitments.has(commitment));
 
-  let phase: AuctionPhaseV1 = matchingCommitment ? "SETTLEMENT_READY" : "COMMIT";
+  // A matching public hash is correlation only. It does not prove closure,
+  // finality, eligibility, coordinator approval, or settlement authority.
+  let phase: AuctionPhaseV1 = matchingCommitment ? "COMMITMENT_CORRELATED" : "COMMIT";
   let terminal = null as ShadowBidFact | null;
   // A confirmed EVM settlement is authoritative over an inconsistent cancel
   // observation; contract invariants should prevent the conflict in practice.
@@ -106,7 +108,7 @@ export function reduceAuctionFacts(facts: readonly ShadowBidFact[]): AuctionView
     winner: settled ? text(settled.payload.winner).toLowerCase() : null,
     winning_amount: settled ? text(settled.payload.amount) : null,
     terminal_source_key: terminal?.source_key ?? null,
-    settlement_ready: !terminal && matchingCommitment,
+    commitment_correlated: !terminal && matchingCommitment,
     updated_source_key: all.at(-1)!.source_key,
   };
 }

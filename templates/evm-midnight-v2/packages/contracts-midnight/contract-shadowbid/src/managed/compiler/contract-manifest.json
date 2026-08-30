@@ -7,26 +7,26 @@
     "type": "directory",
     "contract-info.json": {
       "type": "file",
-      "size": 12668,
-      "hash": "260a2b8519e126336aac7cf58b2234eeff34ff0f85135aa1febde06acd109c0f"
+      "size": 10404,
+      "hash": "d5a60f71553ed5799686d05374b135178c032950a546858873189bf0b83937e1"
     }
   },
   "contract": {
     "type": "directory",
     "index.d.ts": {
       "type": "file",
-      "size": 8903,
-      "hash": "0e042a328e7c5f2601db25f48ead1db7972b6188a77e87534a8f5c254ce2a287"
+      "size": 7555,
+      "hash": "333f8cc41487c0ce8445cd493caf81ccbcb51291929f0e8674d8171662387782"
     },
     "index.js": {
       "type": "file",
-      "size": 334629,
-      "hash": "15dc4ed29e47a2ca1e6fd4478fd70fb635fe057de548ef8c5a551b4c0b1cebb4"
+      "size": 291068,
+      "hash": "64dee5d70cfb6be91119c36c39c021f121d0db89621042aff9d8683e86aa9b68"
     },
     "index.js.map": {
       "type": "file",
-      "size": 8780,
-      "hash": "2f6b6e7adde492df881f0e5b1cad58b8c7b62f1fc067997a0605dbc57e3bc75a"
+      "size": 7603,
+      "hash": "c8f2d8fb67bbbd8f6892ef0468a38e8514a7888a4db20ba1431e32b313d4b473"
     }
   },
   "zkir": {
@@ -38,43 +38,38 @@
     },
     "commit_bid_0.zkir": {
       "type": "file",
-      "size": 11690,
-      "hash": "f9bd906f1f8f229f19093ff311e63d56a2cc0d60963b4b983b28c8c19b6023e7"
+      "size": 11692,
+      "hash": "f4c2b00b642e9d921ad240156732f465604e3c75dbce21f2d5d30eff0a901a1d"
     },
     "commit_bid_1.zkir": {
       "type": "file",
-      "size": 12832,
-      "hash": "272d64641d04319937721bbd6476621d39dc4c70db66c97880ed35098d2756a6"
+      "size": 12754,
+      "hash": "f15cedae0c91c1e6a27379e5a36b561e41c4c3b8f9f7da87f3679e8dc1f2adc9"
     },
     "commit_bid_2.zkir": {
       "type": "file",
-      "size": 13854,
-      "hash": "6808b2b87428098318f791313196ed9b89d853bf2da5f81692c7234d3ca29ecc"
+      "size": 13816,
+      "hash": "24232c470675ec0ad8ad387a24efe751629792eaf02c60c63177cb73762456a7"
     },
     "open_and_consume_0.zkir": {
       "type": "file",
-      "size": 16579,
-      "hash": "90b87a2a138981623952597a8cb4cede388ff11459c9614e7dede78684eb388b"
+      "size": 16657,
+      "hash": "d2b85d1998622c55a6d666c29eab56f8d393044cdf62debd909efcadf48eeb5d"
     },
     "open_and_consume_1.zkir": {
       "type": "file",
-      "size": 16618,
-      "hash": "62187ba411ce51849b6004f9be78acf8363b3d266ad802597f9ee55f9ba32467"
+      "size": 16696,
+      "hash": "eca51df8d0d75d117c7866c21846e93136539a96466747c5c68e5c1d1f155392"
     },
     "open_and_consume_2.zkir": {
       "type": "file",
-      "size": 16617,
-      "hash": "b278bdabbc87a787538f6573a67270d8ccb1d8bcbb8acd6ef7a3dfa48801e781"
-    },
-    "publish_coordinator_result.zkir": {
-      "type": "file",
-      "size": 12874,
-      "hash": "e6958f826cd49a36e9142552b0d3b6c9f54d86a78e00be25addc5506d759eda8"
+      "size": 16696,
+      "hash": "256b9ac2a9da498ae7de4d3d0d35045e59940b532aafd981777ea05feae36aa8"
     },
     "register_auction.zkir": {
       "type": "file",
-      "size": 11486,
-      "hash": "dbba985432b6576e45b6a57a44650e599502d6556497e2fc5a1f990a15dda8e8"
+      "size": 11447,
+      "hash": "6ce143ae83b6845a5b6c80d2422c646e5d6420287e44ad1139577b39bf6a51da"
     }
   }
 }
