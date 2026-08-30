@@ -4,16 +4,16 @@
 
 ShadowBid is a cross-chain sealed-bid NFT auction prototype. The ERC-721 asset is escrowed on EVM; bid commitments and openings are handled by a Compact circuit on Midnight; EffectStream joins the public facts into an auditable read model. The public projection never stores salts, openings, losing amounts, or private bid values.
 
-This repository contains a real contract, Compact circuit, EffectStream primitives/state machine, database/API, batcher adapter, frontend read dashboard, and tests. It is not yet a complete click-through auction product: the frontend write flow is disabled, the local orchestrator deploys the legacy `contract-round-value` for its generic Midnight example, the ShadowBid Midnight deployment is not selected by the sync config, and the development batcher intentionally fails closed until an authoritative finalized-state reader is supplied.
+This repository contains a real contract, Compact circuit, EffectStream primitives/state machine, database/API, batcher adapter, frontend read dashboard, and tests. It is not a complete click-through auction product: the frontend write flow is disabled, and the development batcher intentionally fails closed until an authoritative finalized-state reader is supplied. The local stack deploys both the retained `contract-round-value` reference contract and `contract-shadowbid`; the ShadowBid public ledger is selected by the sync config.
 
 ## Pitch and problem
 
-Open NFT auctions expose bids before the auction is decided, enabling copy-trading, anchoring, and strategic collusion. ShadowBid separates public ownership and settlement from private bid openings: participants publish commitments, then a trusted coordinator publishes an authorized result after commitments close.
+Open NFT auctions expose bids before the auction is decided, enabling copy-trading, anchoring, and strategic collusion. ShadowBid separates public ownership from private bid openings: participants publish commitments, and the EVM contract can settle only on an authorization from its trusted settlement signer. The shipped system does not derive or publish a Midnight auction result.
 
 ## Why these technologies
 
 - **EVM:** ERC-721 custody, public auction lifecycle, commitment records, EIP-712 settlement authorization, payment, and final NFT transfer.
-- **Midnight:** Compact `persistentCommit` binds the bid domain, bidder, amount, and salt; opening circuits verify the bidder’s own commitment; only selected result fields are disclosed.
+- **Midnight:** Compact `persistentCommit` binds the bid domain, bidder, amount, and salt; opening circuits verify the bidder’s own commitment; public commitments, lifecycle flags, and nullifiers are disclosed. Result publication is disabled.
 - **EffectStream:** NTP ordering plus parallel EVM/Midnight ingestion, append-only source facts, replay-safe reduction, Postgres materialization, and a read API. EffectStream is an index/projection here, not a proof verifier or settlement authority.
 
 ## Architecture
@@ -21,17 +21,16 @@ Open NFT auctions expose bids before the auction is decided, enabling copy-tradi
 ```mermaid
 flowchart LR
   Seller -->|safeTransferFrom| EVM[ShadowBidAuction\nEVM escrow + lifecycle]
-  Bidder1 -->|private amount + salt| M[ShadowBid Compact\ncommit/open/result]
+  Bidder1 -->|private amount + salt| M[ShadowBid Compact\ncommit/open]
   Bidder2 -->|private amount + salt| M
-  Bidder3 -.->|not supported by current two-slot circuit| M
+  Bidder3 -->|private amount + salt| M
   EVM -->|public events| ES[EffectStream\nNTP + parallel protocols]
-  M -->|public commitments/result only| ES
+  M -->|public commitments only| ES
   ES --> DB[(Postgres/PGLite\npublic projection)]
   DB --> API[Fastify read API]
   API --> UI[React dashboard]
   Coordinator -->|trusted EIP-712 authorization| EVM
-  Coordinator -->|publish result envelope| B[Batcher adapter]
-  B -.->|blocked until authoritative reader exists| M
+  B[Batcher adapter] -.->|fails closed until an authoritative reader exists| EVM
 ```
 
 ### Sealed-bid sequence
@@ -49,9 +48,7 @@ sequenceDiagram
   M-->>X: disclose commitment hash only
   C->>M: close_commitments
   C->>M: open_and_consume_* with private openings
-  C->>M: publish_coordinator_result(winner, commitment, amount, digest, nonce)
-  M-->>X: disclose public result
-  X-->>E: coordinator records eligible commitment
+  Note over M,E: No Midnight result-publication or settlement path is shipped
   C->>E: settle(EIP-712 authorization, exact payment)
   E-->>S: proceeds; E-->>B1: NFT to winner
 ```
@@ -61,15 +58,15 @@ sequenceDiagram
 | Surface | Public | Private/not retained by projection |
 | --- | --- | --- |
 | EVM contract | seller, NFT, token, deadlines, reserve, commitment hashes, winner, settlement amount after settlement, events | bid amount/salt before settlement; losing openings |
-| Midnight ledger | auction domain, lifecycle flags, commitment hashes, nullifiers, selected published result | commitment salt and opening inputs while supplied to circuits; losing bid openings |
-| EffectStream/API/database | source identity, lifecycle, counts, commitments, final result fields | no `salt`, opening, losing amount, or private bid columns |
-| Frontend | read-only auction cards, phases, counts, hidden reserve/amount labels | no write transaction or proof; “Start private bid flow” is demo state only |
+| Midnight ledger | auction domain, lifecycle flags, commitment hashes, nullifiers | commitment salt and opening inputs while supplied to circuits; losing bid openings |
+| EffectStream/API/database | source identity, lifecycle, counts, commitments, EVM final result fields if EVM settles | no `salt`, opening, losing amount, or private bid columns |
+| Frontend | read-only auction cards, phases, counts, public EVM result when available | no write transaction or proof |
 
 ## Trust assumptions and limitations
 
-The current EVM contract explicitly trusts `settlementSigner`; it does not verify a Midnight proof or inspect Midnight state. The coordinator/result authority must therefore be honest and correctly configured. EIP-712 binds settlement to chain, verifying contract, auction, winner, amount, commitment, Midnight domain/network, result version, expiry, and nonce. The batcher validates canonical envelopes, authoritative readiness, matching commitments/results, and durable replay keys, but the dev reader returns `null`, so settlement requests are rejected by default.
+The current EVM contract explicitly trusts `settlementSigner`; it does not verify a Midnight proof or inspect Midnight state. The coordinator/result authority must therefore be honest and correctly configured. EIP-712 binds settlement to chain, verifying contract, auction, winner, amount, commitment, Midnight domain/network, result version, expiry, and nonce. The batcher rejects every result-publication envelope before it reads authority state or submits a transaction, because the unauthenticated Compact result circuit was removed. Its canonical-envelope, authority-read, and durable-replay code is retained for a future reviewed design, but is not an operational settlement path.
 
-The current Compact source has `commit_bid_0` and `commit_bid_1` only. The existing contract test asserts a third slot and therefore currently exposes a known failing/incomplete requirement; do not claim three private bidders are supported. The dashboard can display indexed auctions but cannot create auctions, submit bids, close commitments, prove openings, or settle. Local deployment also needs wiring from `contract-shadowbid` into `start.dev.ts`/`config.dev.ts` before an end-to-end ShadowBid run is available.
+The current Compact source has three fixed commitment/opening slots (`0`, `1`, and `2`); it is not an unbounded bidder design. Its eight circuits do not compare bid values, select a winner, bind a Midnight bidder to an EVM address, authenticate lifecycle transitions, or enforce its stored deadlines. The dashboard can display indexed auctions but cannot create auctions, submit bids, close commitments, prove openings, or settle. The local stack indexes the deployed ShadowBid public ledger, but this does not create an end-to-end settlement path.
 
 ## Setup, build, test, and demo
 
@@ -103,10 +100,10 @@ docs/                                   architecture, security, demo, readiness,
 
 ## Security posture
 
-The strongest implemented properties are commitment-domain binding, EIP-712 authorization, exact-payment/winner checks, escrow-only receiver validation, reentrancy protection, expiry/nonce/replay checks, append-only source facts, and privacy-oriented API/database/log tests. See [`docs/SECURITY.md`](docs/SECURITY.md), [`docs/PRIVACY.md`](docs/PRIVACY.md), and [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md). This is a prototype; do not use mainnet keys or treat the coordinator as trustless.
+The strongest implemented properties are commitment-domain binding, EIP-712 authorization, exact-payment/winner checks, escrow-only receiver validation, reentrancy protection, expiry/nonce/replay checks, append-only source facts, and privacy-oriented API/database/log tests. These source and projection checks do not prove runtime cryptographic privacy because the current build uses `--skip-zk`. See [`docs/SECURITY.md`](docs/SECURITY.md), [`docs/PRIVACY.md`](docs/PRIVACY.md), and [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md). This is a prototype; do not use mainnet keys or treat the coordinator as trustless.
 
 ## Future work and hackathon fit
 
-Next steps are to add a third bid slot or generalize the Compact ledger, wire the deployed ShadowBid contract into the local sync stack, implement wallet-backed create/commit/close/open/settle actions, replace the fail-closed reader with finalized EVM+Midnight/result-authority reads, and add a complete happy-path integration test. ShadowBid fits a Midnight track because the core user value is private bid openings with selectively public outcomes, while EVM supplies familiar NFT custody and EffectStream demonstrates a usable cross-chain state layer.
+Next steps are to implement proof-backed winner selection with deterministic tie rules and EVM-address binding; replace fixed slots with scalable commitment storage; authenticate and time lifecycle transitions; implement wallet-backed create/commit/close/open/settle actions; replace the fail-closed reader with finalized EVM/Midnight/result-authority reads; and add a proof-capable happy-path integration test. ShadowBid fits a Midnight track because the intended user value is private bid openings with selectively public outcomes, while EVM supplies familiar NFT custody and EffectStream demonstrates a usable cross-chain read layer.
 
 See [`docs/SUBMISSION_READY.md`](docs/SUBMISSION_READY.md) for the truthful submission checklist. No external submission is implied by this repository.

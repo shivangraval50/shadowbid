@@ -22,12 +22,15 @@ describe("ShadowBid Compact privacy boundary", () => {
       "register_auction",
       "commit_bid_0",
       "commit_bid_1",
+      "commit_bid_2",
       "close_commitments",
       "open_and_consume_0",
       "open_and_consume_1",
+      "open_and_consume_2",
     ]) {
       expect(source).toContain(`export circuit ${circuit}`);
     }
+    expect([...source.matchAll(/export circuit [A-Za-z0-9_]+/g)]).toHaveLength(8);
     expect(source).not.toContain("publish_coordinator_result");
     expect(source).not.toContain("winning_amount");
   });

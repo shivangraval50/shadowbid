@@ -8,15 +8,15 @@ Open NFT auctions reveal too much too early. We wanted a design where ownership 
 
 ## What it does
 
-ShadowBid escrows an ERC-721 on EVM, commits bid values through a Midnight Compact circuit, and uses EffectStream to project public lifecycle facts into a queryable cross-chain view. The current checkout includes the core contract/circuit and a read-only dashboard; wallet writes and production settlement authority are not yet wired.
+ShadowBid escrows an ERC-721 on EVM, commits bid values through a Midnight Compact circuit, and uses EffectStream to project public lifecycle facts into a queryable cross-chain view. The current checkout includes the core contract/circuit and a read-only dashboard; wallet writes and a working settlement authority are not yet wired.
 
 ## How we built it
 
-The Solidity contract owns custody and settlement checks. Compact `persistentCommit` binds each opening to the auction domain. EffectStream ingests EVM and Midnight observations, stores append-only facts, reduces them deterministically, and serves a Fastify API consumed by React. A strict batcher adapter validates canonical coordinator-result envelopes and durable replay keys.
+The Solidity contract owns custody and settlement checks. Compact `persistentCommit` binds each opening to the auction domain. EffectStream ingests EVM and Midnight observations, stores append-only facts, reduces them deterministically, and serves a Fastify API consumed by React. A strict batcher adapter rejects all coordinator-result envelopes while result publication is disabled; its canonical-envelope and replay machinery is retained for a future authenticated design.
 
 ## Midnight integration
 
-Midnight is used for the commitment/opening lifecycle and selective disclosure. Salts and openings are not disclosed into the public projection. The EVM contract currently trusts an explicit coordinator signature rather than verifying a Midnight proof, and the local sync config still needs to select the ShadowBid deployment.
+Midnight is used for the commitment/opening lifecycle and selective disclosure. Salts and openings are not disclosed into the public projection. The EVM contract currently trusts an explicit coordinator signature rather than verifying a Midnight proof. The local stack deploys and indexes the ShadowBid public ledger, but no Midnight result drives settlement.
 
 ## Cross-chain architecture
 
@@ -36,7 +36,7 @@ Selective disclosure is an interface design problem: the ledger schema and sync 
 
 ## What's next
 
-Generalize beyond two Compact slots, wire the ShadowBid deployment into the local stack, connect wallet-backed actions, implement the finalized-state reader, and add a complete integration test.
+Implement proof-backed winner selection and EVM-address binding, replace the three fixed Compact slots with scalable storage, authenticate and time lifecycle transitions, connect wallet-backed actions, implement the finalized-state reader, and add a proof-capable integration test.
 
 ## Built with
 
