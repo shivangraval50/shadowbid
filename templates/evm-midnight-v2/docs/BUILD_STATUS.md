@@ -1,18 +1,24 @@
 # Build status
 
-Last reviewed: 2026-08-29.
+Last reviewed: 2026-08-30.
 
 ## Implemented
 
-- Solidity `ShadowBidAuction` contains ERC-721 escrow, commitment records, cancellation, EIP-712 settlement, replay, payment, and proceeds logic.
-- `contract-shadowbid` contains Compact registration, three fixed commitment slots, close/open/consume circuits, and nullifiers. Its generated bindings expose eight circuits; coordinator-result publication is intentionally absent.
+- Solidity `ShadowBidAuction` contains ERC-721 escrow, commitment records, cancellation, EIP-712 settlement, replay, payment, and proceeds logic. Unchanged in this update; still 8/8 Forge tests passing (`forge test --match-contract ShadowBidAuctionTest`).
+- `contract-shadowbid` contains Compact registration, three fixed commitment slots, close/open/consume circuits, and nullifiers. Its generated bindings expose eight circuits; coordinator-result publication is intentionally absent and remains absent — `shadowbid.contract.test.ts` asserts this. Unchanged in this update.
 - EffectStream ShadowBid primitives, append-only facts, reducer, database migration, API routes, privacy checks, and a strict batcher adapter are present.
 - The frontend renders a read-only ShadowBid dashboard from live API state; unavailable write/proof flows are not exposed as controls.
 - Local orchestration compiles and deploys both the retained Counter reference contract and `contract-shadowbid`; the ShadowBid sync primitive reads the deployed ShadowBid ledger.
+- **New:** `packages/batcher/shadowbid-coordinator.ts` implements EIP-712 authentication of an off-chain coordinator result (`CoordinatorResult`/`SETTLEMENT_AUTHORIZATION_TYPES`, byte-for-byte matching `ShadowBidAuction.SettlementAuthorization`), a `MidnightAuctionStateReader` seam plus `toHexLedgerState` adapter for the generated `ShadowBidContract.ledger()` output, `FileCoordinatorResultStore` for the coordinator-to-batcher handoff, and `createEip712AuthoritativeReader`, which builds the real `AuthoritativeSettlementReader`.
+- **New:** `packages/batcher/shadowbid-coordinator-wiring.ts` builds that reader from environment configuration (`SHADOWBID_COORDINATOR_RESULTS_DIR`, `SHADOWBID_EVM_CHAIN_ID`, `SHADOWBID_EVM_AUCTION_CONTRACT`, `SHADOWBID_SETTLEMENT_SIGNER`) plus an injected Midnight ledger reader.
+- **Changed:** `shadowbid-settlement.ts`'s `validateInput` no longer unconditionally throws before consulting `this.stateReader`; it now runs the full, previously-dormant check sequence (authoritative state, expiry, domain match, known commitment, matching result, replay claim) against whatever reader is injected.
+- **Changed:** `batcher.dev.ts` / `batcher.mainnet.ts` now call `buildAuthoritativeSettlementReader()` and fall back to the pre-existing always-`null` reader only if it returns `undefined`.
 
 ## Not complete
 
-- The dev and mainnet batcher readers currently return `null`; they fail closed and cannot settle.
-- The current local execution environment denies Compact's proving-key subprocess (`zkir`, `Operation not permitted`), so the binding script uses the compiler's documented `--skip-zk` mode. ZKIR circuit output is generated, but a live proof/settlement run still needs a host that permits proof-key generation.
+- No `MidnightAuctionStateReader` implementation backed by a live Midnight indexer/node connection is wired into either batcher entrypoint. This local environment cannot reach a live Midnight node/indexer (see QA_REPORT_2026-08-29.md and the "Validation" section below), so one could not be built and validated here. Both `batcher.dev.ts` and `batcher.mainnet.ts` therefore remain fail-closed today: `buildAuthoritativeSettlementReader()` returns `undefined` because no `ledgerReader` argument is supplied, regardless of environment variables.
+- No coordinator process (the thing that would watch the Midnight commit deadline, decide the winner out-of-band, and hold `settlementSigner`'s private key, then write to `FileCoordinatorResultStore`) is implemented. This is intentionally out of scope; see docs/DECISIONS.md.
+- The current local execution environment's Compact compile for `contract-shadowbid` still uses `--skip-zk` (unchanged, pre-existing, and not modified in this update — see below). A full, non-`--skip-zk` compile of `shadowbid.compact` was attempted once during this work and did not finish within 90 seconds (8 circuits over private witness structs `Bid`/`Nullifier` is measurably more expensive to key-generate than the retained Counter reference contract's single `increment` circuit, which does complete quickly and was recompiled here to confirm the toolchain itself is not blocked). No proof/settlement run was executed.
+- `bun run test` (the full `packages/tests/run-tests.ts` orchestrated suite) still cannot complete in this environment: it now progresses further than the QA report's snapshot (EVM contracts compile, Compact contract compiles, Hardhat node starts) but fails at `deploy-evm-contracts` with `Cannot find module '@nomicfoundation/hardhat-ignition/modules'`, a dependency-resolution gap in the installed tree, not a defect introduced by this change. `bun run --cwd packages/frontend build` fails for an unrelated, pre-existing reason: it expects `contract-round-value`'s deployed-address manifest JSON, which requires a full local chain deployment this environment does not have running.
 
-Do not describe the repository as an end-to-end settlement demo, trustless bridge, or proof-backed auction until a finalized EVM/Midnight/coordinator authority reader, authenticated winner-selection design, and proof-capable host are supplied.
+Do not describe the repository as an end-to-end settlement demo, trustless bridge, or proof-backed auction. Winner/amount correctness is now an authenticated (EIP-712, cryptographically verified) but still trusted coordinator claim, not a proof, not a computed result, and not yet an operationally-connected one (no live Midnight ledger reader is wired in). See docs/CLAUDE_SETTLEMENT_REPORT.md for the full account.

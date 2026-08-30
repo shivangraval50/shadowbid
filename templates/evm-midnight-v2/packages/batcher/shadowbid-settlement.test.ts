@@ -48,9 +48,14 @@ async function adapter(stateReader = reader()) {
 afterEach(async () => { await Promise.all(paths.splice(0).map((path) => rm(path, { recursive: true, force: true }))); });
 
 describe("ShadowBid settlement envelope", () => {
-  test("fails closed while the unauthenticated Midnight publication circuit is disabled", async () => {
+  test("accepts a request that matches an authoritative SETTLEMENT_READY result", async () => {
     const target = await adapter();
-    expect(await target.validateInput(input())).toMatchObject({ valid: false, error: "Midnight result publication is disabled pending authenticated coordinator support" });
+    expect(await target.validateInput(input())).toMatchObject({ valid: true });
+  });
+
+  test("fails closed when no authoritative reader has a result for the auction", async () => {
+    const target = await adapter({ async getSettlementReadyState() { return null; } });
+    expect(await target.validateInput(input())).toMatchObject({ valid: false });
   });
 
   test("rejects unknown fields, malformed JSON, wrong method, wrong target, and expiry", async () => {
@@ -66,7 +71,7 @@ describe("ShadowBid settlement envelope", () => {
   test("rejects forged winner/result, wrong auction, unknown commitment, and premature state", async () => {
     const forged = await adapter();
     const forgedResult = await forged.validateInput(input({ ...envelope(), payload: { ...payload, winner: "0x9999999999999999999999999999999999999999" } }));
-    expect(forgedResult).toMatchObject({ valid: false, error: "Midnight result publication is disabled pending authenticated coordinator support" });
+    expect(forgedResult).toMatchObject({ valid: false });
     const wrongAuction = await adapter();
     expect(await wrongAuction.validateInput(input({ ...envelope(), auction: { ...auction, auctionId: "8" } }))).toMatchObject({ valid: false });
     const wrongDomain = await adapter();

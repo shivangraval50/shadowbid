@@ -3,6 +3,7 @@ import { createNewBatcher, FileStorage, type BatcherConfig } from "@effectstream
 import { createEffectstreamL2Adapter } from "./effectstream-l2.ts";
 import { createMidnightBalancingAdapter } from "./midnight-balancing.ts";
 import { DurableReplayGuard, ShadowBidSettlementAdapter, type AuthoritativeSettlementReader } from "./shadowbid-settlement.ts";
+import { buildAuthoritativeSettlementReader } from "./shadowbid-coordinator-wiring.ts";
 
 const batcherPrivateKey = process.env.EVM_PRIVATE_KEY;
 if (!batcherPrivateKey) {
@@ -24,12 +25,16 @@ const midnight = createMidnightBalancingAdapter({
   networkId: "mainnet",
   syncProtocolName: "parallelMidnight",
 });
+// Fails closed unless SHADOWBID_COORDINATOR_RESULTS_DIR, SHADOWBID_EVM_CHAIN_ID,
+// SHADOWBID_EVM_AUCTION_CONTRACT, and SHADOWBID_SETTLEMENT_SIGNER are all set
+// (see shadowbid-coordinator-wiring.ts), and even then stays unavailable until
+// a live Midnight ledger connection is wired in below.
 const unavailableSettlementReader: AuthoritativeSettlementReader = {
   async getSettlementReadyState() { return null; },
 };
 const shadowbid = new ShadowBidSettlementAdapter(
   midnight,
-  unavailableSettlementReader,
+  buildAuthoritativeSettlementReader() ?? unavailableSettlementReader,
   new DurableReplayGuard("./batcher-data"),
 );
 

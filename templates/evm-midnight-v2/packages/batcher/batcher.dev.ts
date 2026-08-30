@@ -7,6 +7,7 @@ import {
   ShadowBidSettlementAdapter,
   type AuthoritativeSettlementReader,
 } from "./shadowbid-settlement.ts";
+import { buildAuthoritativeSettlementReader } from "./shadowbid-coordinator-wiring.ts";
 
 const batchIntervalMs = 1000;
 const port = Number(process.env.BATCHER_PORT ?? "3334");
@@ -24,15 +25,18 @@ const midnight = createMidnightBalancingAdapter({
   syncProtocolName: "parallelMidnight",
 });
 
-// This deliberately fails closed until deployment supplies a reader backed by
-// finalized EVM + Midnight contract state and the coordinator result authority.
-// The EffectStream API/database is intentionally not used as that reader.
+// Fails closed unless SHADOWBID_COORDINATOR_RESULTS_DIR, SHADOWBID_EVM_CHAIN_ID,
+// SHADOWBID_EVM_AUCTION_CONTRACT, and SHADOWBID_SETTLEMENT_SIGNER are all set
+// (see shadowbid-coordinator-wiring.ts). This deployment also has no live
+// Midnight ledger connection wired in, so the reader stays unavailable even
+// when those variables are set; the EffectStream API/database is intentionally
+// never used as this reader (docs/DECISIONS.md).
 const unavailableSettlementReader: AuthoritativeSettlementReader = {
   async getSettlementReadyState() { return null; },
 };
 const shadowbid = new ShadowBidSettlementAdapter(
   midnight,
-  unavailableSettlementReader,
+  buildAuthoritativeSettlementReader() ?? unavailableSettlementReader,
   new DurableReplayGuard("./batcher-data"),
 );
 
