@@ -138,4 +138,6 @@ Local frontend URL: `http://127.0.0.1:10599/`
 
 ## Submission documentation reconciliation — 2026-08-30
 
-The submission-facing README and docs were reconciled with the validated implementation. Current claims consistently identify the three-slot/eight-circuit Compact boundary, real-ZK default compile, opt-in live public-ledger reader and trusted coordinator CLI, fail-closed defaults, and the absence of proof-backed global winner computation or wallet-backed auction writes. Historical review reports retain their original findings with superseded-status banners. The 8/13/11 private three-bidder settlement walkthrough remains explicitly pending until a recorded proof-capable end-to-end run exists.
+The submission-facing README and docs were reconciled with the validated implementation. Current claims consistently identify the three-slot/eight-circuit Compact boundary, real-ZK default compile, opt-in live public-ledger reader and trusted coordinator CLI, fail-closed defaults, and the absence of proof-backed global winner computation or wallet-backed auction writes. Historical review reports retain their original findings with superseded-status banners.
+
+The 8/13/11 private three-bidder settlement walkthrough is **no longer pending**: it was executed live on 2026-08-30 and its observed evidence is recorded in [`TEST_MATRIX.md`](TEST_MATRIX.md). The absence of proof-backed winner computation is unchanged by that run.

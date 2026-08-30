@@ -106,8 +106,17 @@ export const apiRouter: StartConfigApiRouter = async function (
     const featured = [...auctions].sort((x, y) => rank(y) - rank(x))[0]!;
 
     const settled = featured.phase === "SETTLED";
-    const midnightCommits = featured.midnight_commitment_count;
-    const commitStage = midnightCommits >= 3 ? "complete" : midnightCommits > 0 ? "live" : "ready";
+    // Public commitment evidence is whichever side actually indexed the hashes.
+    // `CommitmentRecorded` on EVM and `midnight.commitment_recorded` on Midnight
+    // carry the *same* commitment hash, so the larger count is the number of
+    // distinct public commitments genuinely observable — never a sum, which
+    // would double-count a hash seen on both chains. Reporting only the Midnight
+    // side previously made a settled auction render as `commit: "ready"` with a
+    // count of 0, which was internally inconsistent and understated real
+    // evidence, because this template's Midnight commitment primitive does not
+    // currently emit facts for this ledger shape (EVM-side hashes still do).
+    const publicCommitments = Math.max(featured.commitment_count, featured.midnight_commitment_count);
+    const commitStage = publicCommitments >= 3 ? "complete" : publicCommitments > 0 ? "live" : "ready";
     const lifecycleStage = settled ? "complete" : "unavailable";
 
     return {
@@ -127,7 +136,9 @@ export const apiRouter: StartConfigApiRouter = async function (
       },
       auction_id: featured.auction_id,
       phase: featured.phase,
-      public_commitment_count: midnightCommits,
+      public_commitment_count: publicCommitments,
+      evm_commitment_count: featured.commitment_count,
+      midnight_commitment_count: featured.midnight_commitment_count,
       winning_amount: featured.winning_amount,
       final_owner: featured.winner,
     };

@@ -14,7 +14,7 @@
 | Live Midnight reader | `shadowbid-midnight-reader.test.ts` | **PASS — 4/4**, including unreachable/malformed/missing state failures |
 | Coordinator core | `shadowbid-coordinator-core.test.ts` | **PASS — 11/11**, including validate → sign → file-store → settlement-ready path |
 | Privacy integration | `packages/tests/stm/shadowbid-privacy.test.ts` through full runner | **PASS — API, DB, browser, and captured-log checks** |
-| Full orchestrated stack | `packages/tests/run-tests.ts` | **PASS — 41/41** (35 core + 6 wallet/browser) |
+| Full orchestrated stack | `packages/tests/run-tests.ts` | **PASS — 42/42, 0 failed** (the previous 41 plus the live three-bidder E2E now registered as assertion 29) |
 | Independent browser smoke | `packages/tests/frontend/render.test.ts` | **PASS — 6/6**, zero console errors |
 | Complete private 3-bidder E2E | `packages/tests/shadowbid/live-three-bidder.ts` via `stm/shadowbid-live-e2e.test.ts` | **PASS — executed live 2026-08-30**; see "Recorded live 8/13/11 run" below. Winner selection is still a trusted-coordinator claim, not a proof-backed maximum. |
 
@@ -24,27 +24,37 @@ Executed against a running `bun run dev` stack, with a freshly deployed Compact
 singleton (`register_auction` asserts `initialized == false`, so each run needs
 one). Bids 8, 13, and 11 were passed only as private Compact circuit arguments.
 
+The run below is the one used for browser QA and the privacy scan, executed on a
+**freshly restarted** stack so the `/api/shadowbid/demo-status` endpoint was
+active. The same harness also runs inside `bun run test` as registered assertion
+29, which passed in the 42/42 orchestrated run.
+
 | Step | Evidence |
 | --- | --- |
-| Fresh Compact singleton | `6be075185126bf1306648ed3012d7e9a8fc42619172fe68a8c21f48df3104070` |
-| Mint + escrow + create auction (EVM) | auction id `6`, token `900006`, seller `0x7099…79c8` |
-| Three private bids (real ZK proofs) | `commit_bid_0/1/2` proved and applied; ledger `committed=[true,true,true]`, `commitment_count=3` |
+| Fresh Compact singleton | `d1e31506e64f4d13452c9de9a5ab3ccd5167d5b870a53e440679cf88d908aefc` |
+| Mint + escrow + create auction (EVM) | auction id `1`, token `900001`, seller `0x7099…79c8` |
+| Three private bids (real ZK proofs) | `commit_bid_0/1/2` proved and applied; ledger `committed=[true,true,true]` |
 | Close + open/consume (real ZK proofs) | ledger `commitments_closed=true`, `consumed=[true,true,true]` |
-| Public commitment hashes on EVM | `commitment_count: 3` on auction 6 via `recordCommitment` |
+| Public commitment hashes | three hashes returned by the harness and indexed via EVM `recordCommitment`: `0x8ec4857e…`, `0x5547c7b0…`, `0xabe60451…` (`commitment_count: 3`) |
 | Coordinator authorization | `validateCoordinatorDecision` passed against the live closed ledger; EIP-712 signed by `settlementSigner` |
-| EVM settlement | `settle()` succeeded; `settlement_commitment 0x29dd97a3…de4d` |
-| Final NFT owner | `ownerOf(900006) = 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc` — matches the authorized winner |
-| EffectStream projection | auction 6 `phase=SETTLED`, `winner=0x3c44cddd…93bc`, `winning_amount="13"` |
-| Losing-bid privacy | Losing bidders `0x…0808` / `0x…1111` and `salt`/`opening`/`losing_amount` appear on **no** public surface: `/api/auctions`, `/api/auctions/{1..6}`, `/api/shadowbid/service-state`, `/api/shadowbid/demo-status`, `/api/erc721`, served frontend |
+| EVM settlement | `settle()` succeeded |
+| Final NFT owner | `ownerOf(900001) = 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc` — matches the authorized winner |
+| EffectStream projection | auction 1 `phase=SETTLED`, `winner=0x3c44cddd…93bc`, `winning_amount="13"` |
+| Demo-status endpoint | `mode: "LIVE"`, all seven stages `complete`, `public_commitment_count: 3`, `final_owner` = winner |
+| Browser QA | Dashboard, Demo flow, and detail view render live state; 0 console errors/warnings; mobile 390×844 renders all sections |
+| Losing-bid privacy | Losing bidders `0x…0808` / `0x…1111` and `salt`/`opening`/`losing_amount` appear on **no** public surface: `/api/auctions`, `/api/auctions/{1..6}`, `/api/shadowbid/service-state`, `/api/shadowbid/demo-status`, `/api/erc721`, served frontend, and the fully-rendered DOM including every element attribute |
 
 Caveats, stated plainly:
 
-- `midnight_commitment_count` reads `0` on auction 6 because the already-running
-  sync process was started against the *previous* Compact address and does not
-  re-read the address file at runtime. The Midnight-side facts were verified
-  directly from the indexer via `LiveMidnightAuctionStateReader`, which is what
-  the E2E and the coordinator actually use. A stack started after this deploy
-  indexes them normally.
+- `midnight_commitment_count` reads `0`. The three public commitment hashes come
+  from the EVM `CommitmentRecorded` events; this template's Midnight commitment
+  primitive does not emit facts for this ledger shape, so `commitment_correlated`
+  also stays false. The Midnight-side lifecycle was verified directly from the
+  indexer via `LiveMidnightAuctionStateReader`, which is what the E2E and the
+  coordinator actually use. `/api/shadowbid/demo-status` reports the EVM and
+  Midnight counts separately so this is visible rather than hidden.
+- The three commitments were submitted through **one** local development wallet,
+  not three independently funded Midnight wallets.
 - `13` being the maximum of `{8, 13, 11}` was decided by the test harness, not
   proven on-chain. Nothing in this run establishes a proof-backed maximum.
 

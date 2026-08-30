@@ -29,7 +29,7 @@ flowchart LR
 
 The live Midnight reader checks public ledger registration, closure, commitment membership, and domain consistency before a signed result can reach `SETTLEMENT_READY`. It never trusts the EffectStream/API projection as authority. The coordinator still chooses winner and amount out-of-band; EIP-712 authenticates the signer and binds the result, but does not prove that the winner is the maximum bid. EVM does **not** directly verify a Midnight ZK winner-computation proof.
 
-The requested interactive seller → 8/13/11 bids → close → result → settlement path remains a pending integration target. The current test evidence covers component boundaries and authenticated handoff, not a recorded private-bid-to-final-NFT end-to-end run.
+The non-interactive seller → 8/13/11 private bids → close → open/consume → coordinator authorization → settlement → final-NFT-owner path is implemented and recorded (`packages/tests/shadowbid/live-three-bidder.ts`; evidence in [`TEST_MATRIX.md`](TEST_MATRIX.md)). It is driven by a test harness, not by the browser: the dashboard remains read-only, and the three commitments are submitted through one local development wallet rather than three independently funded Midnight wallets. Because `register_auction` asserts `initialized == false` and the contract has three fixed slots, each deployed Compact instance serves exactly one auction, so a re-run requires a fresh deploy.
 
 ## Reproducibility
 

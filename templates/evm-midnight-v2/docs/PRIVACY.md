@@ -21,4 +21,28 @@ The coordinator sees private bid information out-of-band and chooses the result.
 
 The live reader checks public Midnight state before the batcher accepts an authenticated result, and never treats EffectStream/API/database state as settlement authority. EffectStream is a deterministic indexing/read-model layer, not a trustless bridge. The UI is read-only; no private bid transaction or proof submission is claimed.
 
+## Observed verification — 2026-08-30 live run
+
+These are measured results from a real settled 8/13/11 auction on a freshly
+restarted local stack, not design intent. Bidder A committed 8, B committed 13,
+C committed 11; B won.
+
+- **Public API surfaces** (`/api/auctions`, `/api/auctions/{1..6}`,
+  `/api/shadowbid/service-state`, `/api/shadowbid/demo-status`, `/api/erc721`)
+  and the served frontend document contained neither losing bidder identifier
+  (`0x…0808`, `0x…1111`) nor any `salt`/`opening`/`losing_amount` field.
+- **Rendered DOM** was scanned in-page after full React render, including every
+  element attribute: no losing bidder address in any text node or `data-*`
+  attribute, and no private-field key. Verdict: clean.
+- **Browser console** produced two informational block-watcher logs and zero
+  errors or warnings; no bid value appeared in console output.
+- **What was public, as expected:** three commitment hashes, lifecycle/phase,
+  counts, seller, token, deadlines, reserve, and — after settlement only — the
+  winner `0x3c44cddd…93bc` and `winning_amount: "13"`.
+
+The losing amounts 8 and 11 never appeared on any public surface at any point.
+Note that the winning amount is public by design once settlement occurs, so
+privacy here means *losing* bids stay private, not that all bids stay private
+forever.
+
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) for boundaries and [`SECURITY.md`](SECURITY.md) for controls and limitations.

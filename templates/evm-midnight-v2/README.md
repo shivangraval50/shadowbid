@@ -8,7 +8,9 @@ ShadowBid is a cross-chain sealed-bid NFT auction reference prototype. The ERC-7
 
 The current validated checkout includes the Solidity auction contract, an eight-circuit Compact contract with three fixed bidder slots, EffectStream primitives/reducer/database/API, a live Midnight public-ledger reader, an authenticated trusted-coordinator CLI, a fail-closed batcher adapter, and a polished read-only dashboard.
 
-It is not a trustless or proof-backed auction. The Compact circuit verifies individual commitment/opening operations but does not compare bids or compute the maximum. EVM verifies an EIP-712 authorization from the configured `settlementSigner`; it does **not** directly verify a Midnight ZK winner-computation proof. The coordinator is therefore a trust assumption. The UI does not currently submit create-auction, bid, close, opening, or settlement transactions, and no recorded 8/13/11 end-to-end settlement is claimed.
+It is not a trustless or proof-backed auction. The Compact circuit verifies individual commitment/opening operations but does not compare bids or compute the maximum. EVM verifies an EIP-712 authorization from the configured `settlementSigner`; it does **not** directly verify a Midnight ZK winner-computation proof. The coordinator is therefore a trust assumption. The UI does not currently submit create-auction, bid, close, opening, or settlement transactions.
+
+A real 8/13/11 three-bidder run **has** been executed and recorded — see the evidence table in [`docs/TEST_MATRIX.md`](docs/TEST_MATRIX.md). Three bid values stayed private inputs to real ZK circuits, only commitment hashes and lifecycle flags became public, and a coordinator-authorized settlement transferred the NFT to the stated winner. That run does **not** establish that the winning bid was the highest: the harness selected the winner, Compact never compared the three amounts, and a dishonest coordinator could have signed for a different committed bidder with every check in this system still passing. The three commitments were also submitted through one local development wallet, not three independently funded Midnight wallets.
 
 ## Architecture
 
@@ -64,7 +66,7 @@ bun run test
 bun run dev
 ```
 
-The final validated run reports 41/41 orchestrated checks, 45/45 focused batcher/node checks, 8/8 Forge checks, 4/4 Compact checks, and 6/6 independent browser smoke checks. The exact machine, versions, endpoints, warnings, and persistent-stack evidence are recorded in [`docs/SETUP_STATUS.md`](docs/SETUP_STATUS.md) and [`docs/TEST_MATRIX.md`](docs/TEST_MATRIX.md).
+The final validated run reports 42/42 orchestrated checks, 45/45 focused batcher/node checks, 8/8 Forge checks, 4/4 Compact checks, and 6/6 independent browser smoke checks. The exact machine, versions, endpoints, warnings, and persistent-stack evidence are recorded in [`docs/SETUP_STATUS.md`](docs/SETUP_STATUS.md) and [`docs/TEST_MATRIX.md`](docs/TEST_MATRIX.md).
 
 The exact launch command is `bun run dev`. The frontend is [http://127.0.0.1:10599/](http://127.0.0.1:10599/); the EffectStream API is at `http://127.0.0.1:9999`, and the batcher is at `http://127.0.0.1:3334`. See [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) for service ports and optional coordinator configuration.
 

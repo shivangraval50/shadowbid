@@ -4,7 +4,9 @@
 
 ## Status disclosure
 
-ShadowBid is a validated cross-chain auction reference prototype, not a completed trustless auction. The repository contains the contracts, Compact commitment/opening circuits, EffectStream projection, authenticated trusted-coordinator handoff, tests, and read-only dashboard. Wallet-backed auction writes and a proof-capable 8/13/11 end-to-end run remain pending.
+ShadowBid is a validated cross-chain auction reference prototype, not a completed trustless auction. The repository contains the contracts, Compact commitment/opening circuits, EffectStream projection, authenticated trusted-coordinator handoff, tests, and read-only dashboard.
+
+A real 8/13/11 three-bidder run has been executed and recorded — three private ZK-proved bids, closure, private opening/consumption, coordinator-authorized settlement, and final NFT ownership (evidence table in `docs/TEST_MATRIX.md`). Two honest caveats: the winner is selected by the trusted coordinator rather than proven on-chain, and browser-driven auction writes remain unimplemented — the recorded run is driven by a test harness using one local development wallet, not three independently funded Midnight wallets.
 
 ## Inspiration
 
@@ -32,7 +34,7 @@ The coordinator chooses winner/amount out-of-band, validates the supplied decisi
 
 ## Validation
 
-The final recorded gates are 41/41 orchestrated checks, 45/45 focused batcher/node checks, 8/8 Forge tests, 4/4 Compact tests with real ZK key generation, and 6/6 browser smoke checks. See [`TEST_MATRIX.md`](TEST_MATRIX.md) and [`SETUP_STATUS.md`](SETUP_STATUS.md).
+The final recorded gates are 42/42 orchestrated checks, 45/45 focused batcher/node checks, 8/8 Forge tests, 4/4 Compact tests with real ZK key generation, and 6/6 browser smoke checks. See [`TEST_MATRIX.md`](TEST_MATRIX.md) and [`SETUP_STATUS.md`](SETUP_STATUS.md).
 
 ## Honest limitations and next steps
 

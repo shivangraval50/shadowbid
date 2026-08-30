@@ -23,7 +23,34 @@ The frontend bundle includes ledger/WASM and wallet dependencies. The configured
 
 ## No auctions appear
 
-The current dashboard is read-only. It shows an empty state until a ShadowBid `AuctionCreated` event is indexed. The dev stack validates public deployment/projection infrastructure; it does not create a complete auction lifecycle or fabricate sample bids.
+The current dashboard is read-only. It shows an empty state until a ShadowBid `AuctionCreated` event is indexed, and `/api/shadowbid/demo-status` correspondingly reports `mode: "UNAVAILABLE"` with every stage `ready`. A bare `bun run dev` deploys contracts but does not create an auction or fabricate sample bids — run the harness in [`DEMO.md`](DEMO.md) to populate a real settled auction.
+
+## Re-running the three-bidder harness fails with "registered"
+
+`register_auction` asserts `initialized == false` and the contract has three
+fixed slots, so each deployed Compact instance serves exactly **one** auction,
+permanently. A second run against the same instance fails. Deploy a fresh
+`contract-shadowbid` first — every `bun run dev` / `bun run test` startup does
+this automatically. Note that a long-running sync process reads the Compact
+address once at startup, so redeploying underneath a live stack leaves the sync
+indexing the previous instance; the harness and coordinator are unaffected
+because they read Midnight state directly through the indexer.
+
+## `midnight_commitment_count` is 0 on a settled auction
+
+Expected in the current template. The public commitment hashes shown in the UI
+and counted by `/api/shadowbid/demo-status` come from the EVM
+`CommitmentRecorded` events. The Midnight-side commitment primitive does not
+emit facts for this ledger shape, so `midnight_commitment_count` stays 0 and
+`commitment_correlated` stays false. The demo-status endpoint reports both
+counts separately so this is visible rather than hidden.
+
+## `evm_setNextBlockTimestamp` rejects a timestamp
+
+The local chain only moves time forward. Compact proving and the three
+`recordCommitment` transactions each mine blocks, so the chain has usually
+already passed the commit deadline by settlement time; the harness only nudges
+the clock when it has not, and fails loudly if the settlement window has closed.
 
 ## Settlement requests are rejected
 
@@ -37,4 +64,4 @@ Commitment hashes and metadata are public. Amounts, salts, openings, and losing 
 
 ## Tests and warnings
 
-Run the commands in [`TEST_MATRIX.md`](TEST_MATRIX.md). The final recorded suite is 41/41 orchestrated checks, 45/45 focused batcher/node checks, 8/8 Forge, 4/4 Compact, and 6/6 browser smoke. Non-fatal warnings include local Midnight peer policy, slow operations under build load, duplicate Polkadot versions, and large frontend bundles.
+Run the commands in [`TEST_MATRIX.md`](TEST_MATRIX.md). The final recorded suite is 42/42 orchestrated checks, 45/45 focused batcher/node checks, 8/8 Forge, 4/4 Compact, and 6/6 browser smoke. Non-fatal warnings include local Midnight peer policy, slow operations under build load, duplicate Polkadot versions, and large frontend bundles.

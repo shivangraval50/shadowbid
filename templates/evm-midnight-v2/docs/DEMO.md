@@ -1,8 +1,13 @@
 # Deterministic judge demo (≤2 minutes)
 
-> Current executable demo: read-only dashboard plus source/test evidence. The 8/13/11 live auction-to-settlement sequence below is pending and must not be presented as completed until a recorded proof-capable E2E run exists.
+> **What is live vs. recorded.** Everything shown in the two minutes below is a
+> *live* query against a running local stack. The auction it displays was
+> produced by a *recorded* run of the real three-bidder harness, executed before
+> the presentation because Compact proving alone takes several minutes. No step
+> in the script fabricates a transaction, and nothing is replayed from a fixture
+> file — the UI and APIs read live indexed state the whole time.
 
-## Prepare
+## Prepare (before the two minutes start)
 
 From the template directory:
 
@@ -10,26 +15,62 @@ From the template directory:
 bun run dev
 ```
 
-Open [http://127.0.0.1:10599/](http://127.0.0.1:10599/). Optional evidence endpoints are `http://127.0.0.1:9999/api/auctions`, `http://127.0.0.1:9999/api/shadowbid/service-state`, and `http://127.0.0.1:9999/health`.
+Wait for all eight listeners (5432, 8545, 9944, 8088, 6300, 9999, 3334, 10599).
+Then produce the auction the demo will show. `register_auction` asserts
+`initialized == false`, so a fresh Compact instance is required per run; the
+orchestrator deploys one on every `bun run dev`:
 
-## Current truthful script
+```sh
+cd packages/tests
+MIDNIGHT_STORAGE_PASSWORD="YourPasswordMy1!" \
+  bun run -e 'import {runLiveThreeBidderAuction} from "./shadowbid/live-three-bidder.ts"; console.log(await runLiveThreeBidderAuction())'
+```
 
-| Time | Action | Evidence to call out |
+This takes roughly 6–8 minutes: Midnight wallet sync plus eight real ZK proofs
+(`register_auction`, three `commit_bid_*`, `close_commitments`, three
+`open_and_consume_*`). It prints the auction id, the three public commitment
+hashes, the winner, and the final owner. It never prints bid amounts or salts.
+
+Open [http://127.0.0.1:10599/](http://127.0.0.1:10599/).
+
+## The two-minute script
+
+| Time | Action | What to say / point at |
 | --- | --- | --- |
-| 0:00–0:15 | Say: “ShadowBid keeps bid openings private while EVM custody and cross-chain state remain auditable.” | EVM custody, Midnight commitments, EffectStream public projection. |
-| 0:15–0:35 | Show the dashboard and its operational status, registry, and privacy sections. | Read-only auction cards, lifecycle/count state, and “no bid openings in API”. |
-| 0:35–0:55 | Open an indexed auction, if available. | Seller, token, reserve, deadline, and public commitment count; no amounts or salts. |
-| 0:55–1:15 | Open the auction and service-state API responses. | Public hashes and lifecycle state only; no `salt`, opening, losing amount, or private-bid fields. |
-| 1:15–1:35 | Show `shadowbid.compact` and its privacy test. | Domain-bound `persistentCommit`, three fixed slots, no result-publication circuit. |
-| 1:35–1:50 | Show `ShadowBidAuction.sol` and Forge test names. | Escrow, exact payment, EIP-712 signer authorization, expiry, nonce, replay, and winner checks. |
-| 1:50–2:00 | Show the test matrix and security model. | EVM does not verify a Midnight winner-computation proof; coordinator trust is explicit; EffectStream is indexing, not a trustless bridge. |
+| 0:00–0:15 | Dashboard is open. | “Sealed-bid NFT auction. Bid amounts stay private on Midnight; custody and outcome stay auditable on EVM. Three bidders committed 8, 13, and 11 — watch what the public surfaces actually show.” |
+| 0:15–0:35 | Point at the status strip and the auction card. | Auctions tracked, settled count, and a card showing **TOKEN #900001**, phase **SETTLED**, and **COMMITMENTS 3**. Three commitments are public; three *amounts* are not. |
+| 0:35–0:55 | Click **View auction**. | Seller, public reserve, commit deadline, **FINAL NFT OWNER**, and the EVM ↔ EffectStream ↔ Midnight state row. Note: hash correlation is explicitly *not* settlement authorization. |
+| 0:55–1:15 | Click **Demo flow**. | Seven stages driven by `/api/shadowbid/demo-status`, derived only from indexed public state. Bidders A/B/C appear as *sealed commitment* channels with no values. |
+| 1:15–1:35 | Open `http://127.0.0.1:9999/api/auctions/1` in a tab. | Public JSON: commitment hashes, lifecycle, winner, `winning_amount: "13"`. Search it live for `salt`, `opening`, or the losing bidders — **nothing**. Only the winning amount is public, by protocol design. |
+| 1:35–1:50 | Show `packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact`. | Eight circuits, three fixed slots, domain-bound `persistentCommit`, and **no result-publication circuit**. Amounts and salts are private circuit inputs, never `disclose`d. |
+| 1:50–2:00 | Close on the trust boundary. | “Midnight proves the commitment/opening lifecycle. It does **not** prove 13 was the highest bid — a trusted coordinator selects the winner and signs an EIP-712 authorization, and EVM verifies that authorization, not a ZK winner proof. EffectStream is deterministic indexing, not a trustless bridge.” |
 
-If no auction is indexed, use the empty state and API responses, then move directly to source/tests. Do not fabricate a successful settlement transaction.
+## The one thing not to overstate
 
-## Pending live-flow script (not yet validated)
+If a judge asks “does Midnight prove the winner is the maximum?”, the answer is
+**no**. The Compact circuits verify that each commitment opens correctly and
+that the lifecycle advanced; they never compare the three amounts. The
+coordinator chooses the winner out-of-band and signs it. A dishonest
+coordinator could have signed for the bidder who committed 8, and every check in
+this system — Compact, EffectStream, and the EVM contract — would still have
+passed. That is the explicit, documented trust assumption, not a bug.
 
-The intended future judge flow is: seller mints/lists an NFT; bidder A commits 8, bidder B commits 13, and bidder C commits 11 privately; the auction closes; an approved Midnight result path derives the permitted winner; EffectStream reflects public state; the authenticated settlement executes on EVM; and the final NFT owner is shown. This section is a target specification only. The current Compact circuit does not compute a global maximum, the UI has no write controls, and no run has demonstrated these steps together.
+Similarly, the recorded run submits all three commitments through **one** local
+development wallet. It does not demonstrate three independently funded Midnight
+wallets.
+
+## If no auction is indexed
+
+The dashboard shows a real empty state and `/api/shadowbid/demo-status` reports
+`mode: "UNAVAILABLE"` with every stage `ready`. Use that honestly and move to
+the source/test evidence rows (1:35 onward). Do not fabricate a settlement.
 
 ## Optional coordinator handoff evidence
 
-The one-shot CLI can validate an operator-supplied decision against public Midnight ledger state and sign an EIP-712 result when configured with `SHADOWBID_COORDINATOR_PRIVATE_KEY`, `SHADOWBID_COORDINATOR_RESULTS_DIR`, `SHADOWBID_EVM_CHAIN_ID`, `SHADOWBID_EVM_AUCTION_CONTRACT`, and `SHADOWBID_SETTLEMENT_SIGNER`. It never reads private witnesses or computes the maximum. This is authenticated trusted coordination, not proof-backed winner selection.
+The one-shot CLI validates an operator-supplied decision against public Midnight
+ledger state and signs an EIP-712 result when configured with
+`SHADOWBID_COORDINATOR_PRIVATE_KEY`, `SHADOWBID_COORDINATOR_RESULTS_DIR`,
+`SHADOWBID_EVM_CHAIN_ID`, `SHADOWBID_EVM_AUCTION_CONTRACT`, and
+`SHADOWBID_SETTLEMENT_SIGNER`. It never reads private witnesses and never
+computes a maximum. This is authenticated trusted coordination, not proof-backed
+winner selection.
