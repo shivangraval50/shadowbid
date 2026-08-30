@@ -81,41 +81,55 @@ Verified empirically on the recorded run: the losing bidder identifiers and ever
 midnight, compact, zero-knowledge-proofs, effectstream, ethereum, solidity, openzeppelin, foundry, typescript, bun, react, vite, fastify, postgresql, pglite, viem, eip-712, erc-721
 ```
 
-## Repository link
-
-**[YOU MUST SUPPLY] — this is the single hardest blocker. Read carefully.**
-
-The branch `shadowbid-build` exists **only on this machine**. It is not pushed
-anywhere. The one configured remote is:
+## Repository link — RESOLVED, public and verified
 
 ```
-origin  https://github.com/effectstream/effectstream.git
+https://github.com/shivangraval50/shadowbid
 ```
 
-That is the **upstream EffectStream project**, not your fork. Do not push there:
-you almost certainly lack write access, and this is hackathon work that belongs
-in your own repository. Judges cannot see a local branch.
+Public, default branch `shadowbid-build`. Verified reachable without any
+GitHub session: repository page, root README, ShadowBid README, DEMO,
+ARCHITECTURE, PRIVACY, SECURITY, TEST_MATRIX, this packet, and all three
+screenshots each returned HTTP 200.
 
-To produce a working link, create your own repository and push to it:
-
-```sh
-cd /Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream
-git remote add submission https://github.com/<your-account>/<your-repo>.git
-git push submission shadowbid-build
-```
-
-Then paste that URL into Devpost, pointing judges at:
+The repository root README opens with a judge banner linking straight into the
+submission, and states that everything outside `templates/evm-midnight-v2/` is
+upstream EffectStream (Apache-2.0 / MIT) rather than hackathon work.
 
 ```
-Branch:        shadowbid-build
-Commit:        55faa31c   (or the latest at push time)
+Repository:    https://github.com/shivangraval50/shadowbid
+Branch:        shadowbid-build (default)
 Template path: templates/evm-midnight-v2
 Start here:    templates/evm-midnight-v2/README.md
 ```
 
-Note this repository is a full EffectStream monorepo; ShadowBid lives entirely
-under `templates/evm-midnight-v2`. Say so in the submission so judges do not
-land in unrelated template code.
+## Track
+
+```
+Cross-Chain Track
+```
+
+## Challenges we ran into
+
+```
+The hardest problems were all at the seams between the two chains, not inside either one.
+
+Getting a real proof-capable run at all took three separate fixes: the harness imported the Compact bindings from the wrong subpath (the package root exports the ShadowBid namespace and witnesses; the /contract subpath exports Contract and ledger directly), the live ledger reader never exposed the public consumed_0/1/2 flags so a completed lifecycle read back as undefined, and the harness unconditionally pushed the EVM clock forward before settling even though proving and three recordCommitment transactions had already moved the chain past the deadline, which the RPC rejects.
+
+Two SQL bugs were invisible until a real database was reachable for the first time: a hand-written parameter shim computed an exclusive end offset where pgtyped's runtime expects an inclusive one, which silently ate the space in "LIMIT $1 OFFSET $2", and its regex matched PostgreSQL's ::int casts as named parameters.
+
+The Compact contract also turns out to be single-use — register_auction asserts initialized == false and there are three fixed slots — so every end-to-end run needs a freshly deployed instance, which shaped how the demo has to be staged.
+```
+
+## What we learned
+
+```
+Privacy claims are only worth what you can verify. It is easy to write "losing bids stay private" and much harder to prove it, so we checked the actual public surfaces against a real settled auction: every API route, the served frontend, and the fully rendered DOM including element attributes, looking for the losing bidders' addresses and any salt or opening field.
+
+We also learned to be precise about what a ZK circuit actually proves. Our circuits prove that commitments are well-formed and that openings genuinely open them. They do not prove the winner was the highest bidder, and it would have been easy to let a recorded 8/13/11 run imply otherwise. Naming the exact attack that remains possible — a dishonest coordinator signing for the bidder who committed 8, with every check still passing — turned out to be the most useful line in our documentation.
+
+Finally, deterministic indexing is not bridging. EffectStream gave us one auditable cross-chain view, but the moment it is treated as settlement authority the security model collapses, so the batcher reads finalized Midnight state directly and fails closed.
+```
 
 ## Demo video
 
@@ -136,7 +150,8 @@ Suggested Devpost thumbnail: `01-dashboard.png`.
 ## Try it out / setup instructions
 
 ```
-git clone <repo> && cd templates/evm-midnight-v2
+git clone https://github.com/shivangraval50/shadowbid.git
+cd shadowbid/templates/evm-midnight-v2
 bun install --frozen-lockfile
 bun run dev
 # wait for all 8 listeners, then open http://127.0.0.1:10599/
@@ -193,10 +208,30 @@ Proof-backed winner selection with deterministic tie rules and EVM-address bindi
 
 ---
 
-## What still needs manual action
+## Manual submission procedure (~8 minutes)
 
-1. **Push to your own repository** and paste the public URL. `shadowbid-build` is local-only; the sole configured remote is the upstream `effectstream/effectstream`, which is not yours to push to. See the Repository link section above for exact commands. **Without this, judges have nothing to inspect — do it first.**
-2. **Record and link a demo video** if the hackathon requires one — script in `docs/DEMO.md`.
-3. **Upload the three screenshots** from `docs/screenshots/`.
-4. **Fill in team information.**
-5. **Press submit on Devpost** — I have no Devpost access or credentials and cannot submit on your behalf.
+The repository is public and every field above is final. Devpost could not be
+filled automatically: `devpost.com/settings` redirected to the login page, so
+there is no authenticated session on this machine. Do these in order.
+
+| # | ~Time | Action |
+| --- | --- | --- |
+| 1 | 0:30 | Log in to Devpost and open the hackathon's **Submit a project** form. Click **Save draft** immediately so nothing is lost. |
+| 2 | 0:30 | **Project name:** `ShadowBid`. **Tagline:** copy the Tagline block above. |
+| 3 | 2:00 | Paste the long-form fields from the blocks above, in this order: Elevator pitch → The problem → The solution → How it works → How we used Midnight → How we used EffectStream → Privacy model → Challenges → Accomplishments → What we learned → Known limitations → Future work. |
+| 4 | 0:30 | **Built with:** paste the Technologies block (comma-separated tag list). |
+| 5 | 0:30 | **Try it out / repository link:** `https://github.com/shivangraval50/shadowbid` |
+| 6 | 1:00 | **Upload the three images** from `templates/evm-midnight-v2/docs/screenshots/`: `01-dashboard.png` (set as thumbnail), `02-demo-flow.png`, `03-detail-final-owner.png`. |
+| 7 | 0:30 | **Track / category:** select **Cross-Chain Track**. |
+| 8 | 1:00 | Re-read the Known limitations block in the form. Confirm it still says Midnight does not prove the maximum, the coordinator selects and signs the winner, Ethereum verifies authorization rather than a Midnight proof, EffectStream is indexing rather than a bridge, the UI is read-only, and one local wallet submitted the three commitments. Do not soften any of it. |
+| 9 | 0:30 | **Team fields:** enter your own name/handle/contact. These are the only fields nobody else can fill for you. |
+| 10 | 0:30 | **Video:** if optional, leave blank. If mandatory, record a ≤2-minute screen capture following `docs/DEMO.md` against the running stack, upload to YouTube/Vimeo unlisted, and paste the link. |
+| 11 | 0:30 | **Save draft**, review once end to end for leftover placeholders or broken links, then **Submit**. |
+
+### Fields only you can supply
+
+- **Team member name(s), roles, contact, Devpost handles.**
+- **Demo video URL** — only if the hackathon makes video mandatory. Nothing in
+  this repository fabricates one.
+
+Everything else on this page is final, verified, and safe to paste as written.
