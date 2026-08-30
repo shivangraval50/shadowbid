@@ -83,13 +83,39 @@ midnight, compact, zero-knowledge-proofs, effectstream, ethereum, solidity, open
 
 ## Repository link
 
-**[YOU MUST SUPPLY]** — this repo has no configured public remote. Push the branch and paste the URL.
+**[YOU MUST SUPPLY] — this is the single hardest blocker. Read carefully.**
+
+The branch `shadowbid-build` exists **only on this machine**. It is not pushed
+anywhere. The one configured remote is:
 
 ```
-Branch: shadowbid-build
-Commit: <fill in after push>
-Template path: templates/evm-midnight-v2
+origin  https://github.com/effectstream/effectstream.git
 ```
+
+That is the **upstream EffectStream project**, not your fork. Do not push there:
+you almost certainly lack write access, and this is hackathon work that belongs
+in your own repository. Judges cannot see a local branch.
+
+To produce a working link, create your own repository and push to it:
+
+```sh
+cd /Users/shivangraval/Documents/Codex/2026-08-29/you-are-responsible-for-making-this/effectstream
+git remote add submission https://github.com/<your-account>/<your-repo>.git
+git push submission shadowbid-build
+```
+
+Then paste that URL into Devpost, pointing judges at:
+
+```
+Branch:        shadowbid-build
+Commit:        55faa31c   (or the latest at push time)
+Template path: templates/evm-midnight-v2
+Start here:    templates/evm-midnight-v2/README.md
+```
+
+Note this repository is a full EffectStream monorepo; ShadowBid lives entirely
+under `templates/evm-midnight-v2`. Say so in the submission so judges do not
+land in unrelated template code.
 
 ## Demo video
 
@@ -169,7 +195,7 @@ Proof-backed winner selection with deterministic tie rules and EVM-address bindi
 
 ## What still needs manual action
 
-1. **Push the repository** and paste the public URL (no remote is configured here).
+1. **Push to your own repository** and paste the public URL. `shadowbid-build` is local-only; the sole configured remote is the upstream `effectstream/effectstream`, which is not yours to push to. See the Repository link section above for exact commands. **Without this, judges have nothing to inspect — do it first.**
 2. **Record and link a demo video** if the hackathon requires one — script in `docs/DEMO.md`.
 3. **Upload the three screenshots** from `docs/screenshots/`.
 4. **Fill in team information.**
