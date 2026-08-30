@@ -1,13 +1,14 @@
 # Local setup status
 
-Last validated: 2026-08-29 on macOS 15.3.2 (24D81), Apple Silicon arm64, 8 GB RAM.
+Last validated: 2026-08-30 on macOS 15.3.2 (24D81), Apple Silicon arm64, 8 GB RAM.
 
 ## Repository checkpoint
 
 - Repository: `effectstream/effectstream`, template `templates/evm-midnight-v2`
-- Branch: `v-next`
-- Untouched baseline commit recorded before changes: `7bbd6709647f55a65912185a4046e358c93143a5`
-- No ShadowBid code has been added.
+- Current working branch: `shadowbid-build`
+- Current validated implementation checkpoint: `4dbc3c23` (documentation reconciliation may add a later commit).
+- Historical untouched baseline before ShadowBid work: branch `v-next`, commit `7bbd6709647f55a65912185a4046e358c93143a5`.
+- ShadowBid implementation and validation are recorded below; the historical baseline statement “No ShadowBid code has been added” applies only to that earlier checkpoint.
 
 ## Installed tools
 
@@ -134,3 +135,7 @@ The earlier full suite remains green at **41/41 tests**, and both Compact/Midnig
 
 Exact successful launch command: `bun run dev`
 Local frontend URL: `http://127.0.0.1:10599/`
+
+## Submission documentation reconciliation — 2026-08-30
+
+The submission-facing README and docs were reconciled with the validated implementation. Current claims consistently identify the three-slot/eight-circuit Compact boundary, real-ZK default compile, opt-in live public-ledger reader and trusted coordinator CLI, fail-closed defaults, and the absence of proof-backed global winner computation or wallet-backed auction writes. Historical review reports retain their original findings with superseded-status banners. The 8/13/11 private three-bidder settlement walkthrough remains explicitly pending until a recorded proof-capable end-to-end run exists.

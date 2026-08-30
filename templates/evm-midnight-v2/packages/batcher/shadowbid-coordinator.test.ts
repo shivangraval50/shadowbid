@@ -51,6 +51,9 @@ function baseLedger(overrides: Partial<MidnightAuctionLedgerState> = {}): Midnig
     committed_0: true,
     committed_1: true,
     committed_2: true,
+    consumed_0: true,
+    consumed_1: true,
+    consumed_2: true,
     ...overrides,
   };
 }
@@ -229,11 +232,16 @@ describe("ShadowBid EIP-712 coordinator result", () => {
       commit_deadline: 100n, settlement_deadline: 200n,
       commitment_0: new Uint8Array(32).fill(5), commitment_1: new Uint8Array(32).fill(6), commitment_2: new Uint8Array(32).fill(7),
       committed_0: true, committed_1: false, committed_2: true,
+      consumed_0: true, consumed_1: false, consumed_2: true,
     };
     const adapted = toHexLedgerState(raw);
     expect(adapted.auction_id).toBe(`0x${"01".repeat(32)}`);
     expect(adapted.commitment_1).toBe(`0x${"06".repeat(32)}`);
     expect(adapted.committed_1).toBe(false);
+    // consumed_N are public lifecycle flags and must survive the adapter too.
+    expect(adapted.consumed_0).toBe(true);
+    expect(adapted.consumed_1).toBe(false);
+    expect(adapted.consumed_2).toBe(true);
   });
 
   test("addressToBytes32 zero-left-pads a 20-byte EVM address into the 32-byte Bytes<32> encoding register_auction's caller must use", () => {

@@ -1,4 +1,5 @@
 # Claude settlement report — shadowbid/claude-settlement
+<!-- HISTORICAL IMPLEMENTATION REPORT: This report records the settlement pass and intermediate results. Later final validation supersedes intermediate counts and blockers; see BUILD_STATUS.md and TEST_MATRIX.md. -->
 
 Date: 2026-08-30. Branch created from `shadowbid-build` at `80cb6029` (merge: shadowbid gate fix), in an isolated worktree at `shadowbid-worktrees/shadowbid-claude-settlement/templates/evm-midnight-v2`.
 

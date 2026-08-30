@@ -1,4 +1,5 @@
 ## Verdict
+<!-- HISTORICAL REVIEW: Findings below describe the earlier pre-reader/pre-coordinator state. The current implementation and validation status are summarized in BUILD_STATUS.md, TEST_MATRIX.md, and SUBMISSION_READY.md. Historical findings are preserved verbatim. -->
 
 ShadowBid is a credible cross-chain architecture prototype, but not a completed cross-chain auction. Its strongest pieces are EVM custody controls, domain-bound Compact commitments, and an honest fail-closed trust boundary. Its decisive weakness is that no verified Midnight result currently affects settlement.
 

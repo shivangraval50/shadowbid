@@ -114,6 +114,16 @@ export type MidnightAuctionLedgerState = {
   committed_0: boolean;
   committed_1: boolean;
   committed_2: boolean;
+  /**
+   * Public `consumed_N` lifecycle flags (shadowbid.compact declares each as an
+   * `export ledger`, so these are public state, never a private witness). They
+   * record that a slot's opening was proven via `open_and_consume_N`, which is
+   * exactly the "committed *and consumed*" condition SOL_REVIEW_1.md's H-1
+   * remediation asks settlement eligibility to be able to check.
+   */
+  consumed_0: boolean;
+  consumed_1: boolean;
+  consumed_2: boolean;
 };
 
 export interface MidnightAuctionStateReader {
@@ -128,6 +138,7 @@ export function toHexLedgerState(ledger: {
   commit_deadline: bigint; settlement_deadline: bigint;
   commitment_0: Uint8Array; commitment_1: Uint8Array; commitment_2: Uint8Array;
   committed_0: boolean; committed_1: boolean; committed_2: boolean;
+  consumed_0: boolean; consumed_1: boolean; consumed_2: boolean;
 }): MidnightAuctionLedgerState {
   const hex = (bytes: Uint8Array): Hex => `0x${Buffer.from(bytes).toString("hex")}`;
   return {
@@ -137,6 +148,7 @@ export function toHexLedgerState(ledger: {
     commit_deadline: ledger.commit_deadline, settlement_deadline: ledger.settlement_deadline,
     commitment_0: hex(ledger.commitment_0), commitment_1: hex(ledger.commitment_1), commitment_2: hex(ledger.commitment_2),
     committed_0: ledger.committed_0, committed_1: ledger.committed_1, committed_2: ledger.committed_2,
+    consumed_0: ledger.consumed_0, consumed_1: ledger.consumed_1, consumed_2: ledger.consumed_2,
   };
 }
 

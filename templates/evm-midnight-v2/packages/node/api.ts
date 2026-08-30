@@ -63,4 +63,73 @@ export const apiRouter: StartConfigApiRouter = async function (
     const [state] = await runPreparedQuery(shadowBidServiceState.run(undefined, dbConn), "/api/shadowbid/service-state");
     return state ?? { auction_count: 0, commit_count: 0, commitment_correlated_count: 0, settled_count: 0, cancelled_count: 0 };
   });
+
+  /**
+   * Judge-demo workflow status, derived strictly from the public EffectStream
+   * projection. It reports only what the indexed public state can actually
+   * justify — it never reports a stage complete on the basis of a local
+   * script's intent, and it never exposes a bid opening, salt, losing amount,
+   * or losing bidder identity (none of those exist in this projection at all).
+   *
+   * Stage inference rules, and why each is sound:
+   * - `mint`/`auction`: an indexed `AuctionCreated` fact implies the ERC-721 was
+   *   already escrowed, because `createAuction` performs `safeTransferFrom`
+   *   before emitting that event.
+   * - `commit`: counted from public commitment *hashes* only.
+   * - `close`/`prove`: the Compact `commitments_closed`/`consumed_*` flags are
+   *   deliberately NOT part of the public projection, so they cannot be read
+   *   here. They are reported complete only once settlement succeeded, which is
+   *   sound: `ShadowBidAuction.settle` requires a coordinator EIP-712
+   *   authorization, and the coordinator signs only after
+   *   `validateCoordinatorDecision` confirms a closed, consumed, domain-matching
+   *   Midnight ledger. Before settlement they report `unavailable`, not a guess.
+   * - `settle`/`owner`: taken from the terminal settled fact and its public winner.
+   */
+  server.get("/api/shadowbid/demo-status", async () => {
+    const auctions = await runPreparedQuery(
+      listShadowBidAuctions.run({ limit: 100, offset: 0 }, dbConn),
+      "/api/shadowbid/demo-status",
+    );
+    if (auctions.length === 0) {
+      return {
+        available: false,
+        mode: "UNAVAILABLE" as const,
+        message: "No ShadowBid auction has been indexed yet. Start the local stack and run the three-bidder flow to populate this view.",
+        stages: { mint: "ready", auction: "ready", commit: "ready", close: "ready", prove: "ready", settle: "ready", owner: "ready" },
+        final_owner: null,
+      };
+    }
+    // Most advanced auction wins: settled first, then correlated, then most commitments.
+    const rank = (a: typeof auctions[number]) =>
+      (a.phase === "SETTLED" ? 3000 : a.commitment_correlated ? 2000 : 1000) +
+      a.midnight_commitment_count + a.commitment_count;
+    const featured = [...auctions].sort((x, y) => rank(y) - rank(x))[0]!;
+
+    const settled = featured.phase === "SETTLED";
+    const midnightCommits = featured.midnight_commitment_count;
+    const commitStage = midnightCommits >= 3 ? "complete" : midnightCommits > 0 ? "live" : "ready";
+    const lifecycleStage = settled ? "complete" : "unavailable";
+
+    return {
+      available: true,
+      mode: settled ? ("LIVE" as const) : ("EVIDENCE" as const),
+      message: settled
+        ? `Auction ${featured.auction_id} settled. The winner and winning amount are public by protocol design; losing bids were never published.`
+        : `Auction ${featured.auction_id} is in ${featured.phase}. Midnight close/open-consume flags are private to the coordinator's authoritative reader and are not asserted here until settlement proves they held.`,
+      stages: {
+        mint: "complete",
+        auction: "complete",
+        commit: commitStage,
+        close: lifecycleStage,
+        prove: lifecycleStage,
+        settle: settled ? "complete" : "ready",
+        owner: featured.winner ? "complete" : "ready",
+      },
+      auction_id: featured.auction_id,
+      phase: featured.phase,
+      public_commitment_count: midnightCommits,
+      winning_amount: featured.winning_amount,
+      final_owner: featured.winner,
+    };
+  });
 };

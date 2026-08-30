@@ -1,4 +1,5 @@
 ## CRITICAL
+<!-- HISTORICAL REVIEW: This document records an earlier review checkpoint. Its findings and paths are preserved; current remediation and validation status are in BUILD_STATUS.md and SECURITY_REVIEW.md. -->
 
 No critical findings.
 

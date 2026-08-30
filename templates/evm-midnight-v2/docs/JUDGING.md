@@ -1,21 +1,25 @@
 # Judging guide
 
-## Problem and clarity
+## One-sentence scope
 
-Private bid openings address strategic leakage in public NFT auctions. The README and dashboard make the public/private boundary visible.
+ShadowBid is a privacy-conscious, cross-chain indexed auction prototype with authenticated trusted coordination; it is not a trustless bridge or proof-backed winner-computation system.
 
-## Technical integration
+## What to inspect
 
-Inspect `ShadowBidAuction.sol`, `contract-shadowbid/src/shadowbid.compact`, `node/shadowbid-primitive.ts`, `node/state-machine.ts`, and `batcher/shadowbid-settlement.ts`. These are implemented components; the documented unwired boundaries are part of the evaluation context.
+- `packages/contracts-evm/src/contracts/ShadowBidAuction.sol`: escrow, deadlines, exact payment, EIP-712 authorization, winner, domain, nonce, expiry, and replay checks.
+- `packages/contracts-midnight/contract-shadowbid/src/shadowbid.compact`: domain-bound `persistentCommit`, three private opening slots, and absence of a result-publication circuit.
+- `packages/node/shadowbid-primitive.ts` and `state-machine.ts`: immutable public facts and deterministic combined state.
+- `packages/batcher/shadowbid-midnight-reader.ts` and `shadowbid-coordinator-core.ts`: live public-ledger checks and trusted result signing.
+- `packages/frontend/client/src/App.tsx`: read-only judge dashboard and explicit privacy boundary.
 
-## Privacy and security
+## Claims judges should evaluate
 
-Look for domain-bound `persistentCommit`, absence of salt disclosure, no private columns in the projection, EIP-712 settlement checks, and durable replay rejection. Do not interpret the coordinator trust model as trustless proof verification.
+Midnight protects the commitment/opening boundary: amount and salt are private circuit inputs and losing values do not enter public projection surfaces. The circuit does not compare all bids or derive a maximum. EVM does **not** directly verify a Midnight ZK winner-computation proof; settlement depends on the configured trusted coordinator signer. EffectStream deterministically orders/indexes public multi-chain facts and materializes a read model; it is not a trustless bridge or settlement authority.
 
-## Demo expectations
+## Demo
 
-Use [`DEMO.md`](DEMO.md). It is a deterministic two-minute read-only/source-backed demo. The repository does not currently support a truthful three-bid UI walkthrough or completed settlement.
+Use [`DEMO.md`](DEMO.md). The current executable path is a two-minute read-only dashboard/source/test demonstration. The seller → A=8 → B=13 → C=11 → close → result → settlement walkthrough is a pending integration target and must not be claimed as completed without a recorded E2E run.
 
-## Track fit
+## Evidence
 
-Midnight supplies private computation and selective disclosure; EVM supplies NFT custody; EffectStream supplies a cross-chain public view.
+The final matrix records 41/41 orchestrated assertions, 45/45 focused batcher/node tests, 8/8 Forge, 4/4 Compact, and 6/6 browser smoke checks. Review [`PRIVACY.md`](PRIVACY.md), [`SECURITY.md`](SECURITY.md), and [`SUBMISSION_READY.md`](SUBMISSION_READY.md) for limitations.

@@ -1,4 +1,5 @@
 # ShadowBid security review disposition
+<!-- REVIEW HISTORY: This is the prior source/build/test review checkpoint. It is preserved as historical evidence; current post-change status is in BUILD_STATUS.md, TEST_MATRIX.md, and SUBMISSION_READY.md. -->
 
 Reviewed and remediated: 2026-08-29. This is a source/build/test review; it is not a proof-capable production audit.
 

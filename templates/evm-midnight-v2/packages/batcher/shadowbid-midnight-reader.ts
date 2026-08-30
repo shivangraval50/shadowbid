@@ -152,6 +152,7 @@ export class LiveMidnightAuctionStateReader implements MidnightAuctionStateReade
         commit_deadline: l.commit_deadline, settlement_deadline: l.settlement_deadline,
         commitment_0: l.commitment_0, commitment_1: l.commitment_1, commitment_2: l.commitment_2,
         committed_0: l.committed_0, committed_1: l.committed_1, committed_2: l.committed_2,
+        consumed_0: l.consumed_0, consumed_1: l.consumed_1, consumed_2: l.consumed_2,
       });
     } catch (cause) {
       return this.fail({ kind: "malformed-state", contractAddress: midnightContractAddress, cause });

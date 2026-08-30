@@ -198,6 +198,12 @@ async function test() {
       console.error("Midnight property test failed (non-fatal):", e);
     }
 
+    // This intentionally follows the existing Midnight property exercise in
+    // the same process: MidnightLocalConnector then reuses the synchronized,
+    // funded dev wallet for real ShadowBid circuit calls.
+    const { shadowBidLiveE2eTest } = await import("./stm/shadowbid-live-e2e.test.ts");
+    await shadowBidLiveE2eTest();
+
     // ── Phase E: Frontend ───────────────────────────────────────────────
     console.log("\n--- Phase E: Frontend Tests ---\n");
     const { frontendBuildTest } = await import("./frontend/build-smoke.test.ts");

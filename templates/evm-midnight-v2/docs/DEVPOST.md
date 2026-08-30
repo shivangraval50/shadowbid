@@ -2,41 +2,41 @@
 
 **Tagline:** Bid without showing your hand.
 
+## Status disclosure
+
+ShadowBid is a validated cross-chain auction reference prototype, not a completed trustless auction. The repository contains the contracts, Compact commitment/opening circuits, EffectStream projection, authenticated trusted-coordinator handoff, tests, and read-only dashboard. Wallet-backed auction writes and a proof-capable 8/13/11 end-to-end run remain pending.
+
 ## Inspiration
 
-Open NFT auctions reveal too much too early. We wanted a design where ownership remains easy to verify on EVM while bid openings remain private until the auction result is ready.
+Open NFT auctions reveal too much too early. We wanted EVM custody and public lifecycle state without putting bid openings or losing amounts into the public projection.
 
 ## What it does
 
-ShadowBid escrows an ERC-721 on EVM, commits bid values through a Midnight Compact circuit, and uses EffectStream to project public lifecycle facts into a queryable cross-chain view. The current checkout includes the core contract/circuit and a read-only dashboard; wallet writes and a working settlement authority are not yet wired.
+The ERC-721 auction contract escrows an NFT and enforces signed settlement conditions. Midnight Compact binds each bidder’s amount and salt to an auction-domain commitment and verifies individual opening operations. EffectStream orders EVM and Midnight observations into a deterministic public read model consumed by the API and React dashboard.
 
-## How we built it
+## Midnight and privacy
 
-The Solidity contract owns custody and settlement checks. Compact `persistentCommit` binds each opening to the auction domain. EffectStream ingests EVM and Midnight observations, stores append-only facts, reduces them deterministically, and serves a Fastify API consumed by React. A strict batcher adapter rejects all coordinator-result envelopes while result publication is disabled; its canonical-envelope and replay machinery is retained for a future authenticated design.
+Amounts, salts, and opening witnesses are not disclosed to public events, EffectStream state, database columns, API responses, browser output, or privacy-test logs. Commitment hashes, lifecycle flags, nullifiers, timing, addresses, and transaction metadata remain public; winner identity and winning amount become public on EVM settlement. The current circuit has three fixed slots and does not compare bids or compute a maximum.
 
-## Midnight integration
+## Settlement and cross-chain model
 
-Midnight is used for the commitment/opening lifecycle and selective disclosure. Salts and openings are not disclosed into the public projection. The EVM contract currently trusts an explicit coordinator signature rather than verifying a Midnight proof. The local stack deploys and indexes the ShadowBid public ledger, but no Midnight result drives settlement.
-
-## Cross-chain architecture
-
-EVM and Midnight are correlated in EffectStream by auction/domain identifiers. There is no bridge or light client in this prototype. EffectStream provides ordering and projection, not atomic cross-chain execution.
-
-## Challenges
-
-Keeping public facts useful without leaking private openings, handling duplicate/out-of-order observations, and making settlement fail closed were the main challenges. The remaining integration work is intentionally documented rather than hidden.
+The coordinator chooses winner/amount out-of-band, validates the supplied decision against public Midnight ledger state, and signs an EIP-712 result. EVM authenticates the configured `settlementSigner`; it does **not** directly verify a Midnight ZK winner-computation proof. EffectStream is the deterministic multi-chain ordering/indexing/read-model layer, not a trustless bridge, proof verifier, or settlement authority.
 
 ## Accomplishments
 
-We built the escrow contract, domain-bound commitment circuit, replay-safe projection model, privacy-oriented API/database checks, strict settlement envelope validation, and a clear read dashboard.
+- ERC-721 escrow, exact-payment settlement, deadline, domain, nonce, expiry, replay, and signer checks.
+- Domain-bound Compact `persistentCommit` and private opening boundary.
+- Live public-ledger reader and fail-closed batcher/coordinator handoff.
+- Deterministic EffectStream reducer, public API/database projection, and privacy checks.
+- Judge-facing read dashboard with loading, empty, error, registry, detail, status, and privacy states.
 
-## What we learned
+## Validation
 
-Selective disclosure is an interface design problem: the ledger schema and sync primitive define the privacy boundary. A projection can be deterministic and auditable without being a settlement authority.
+The final recorded gates are 41/41 orchestrated checks, 45/45 focused batcher/node checks, 8/8 Forge tests, 4/4 Compact tests with real ZK key generation, and 6/6 browser smoke checks. See [`TEST_MATRIX.md`](TEST_MATRIX.md) and [`SETUP_STATUS.md`](SETUP_STATUS.md).
 
-## What's next
+## Honest limitations and next steps
 
-Implement proof-backed winner selection and EVM-address binding, replace the three fixed Compact slots with scalable storage, authenticate and time lifecycle transitions, connect wallet-backed actions, implement the finalized-state reader, and add a proof-capable integration test.
+The UI currently exposes no create, commit, close, open, or settle transaction controls. Compact lifecycle authority and global winner computation are not implemented. The coordinator is trusted and needs production controls such as multi-party approval, key management, rate limiting, and durable audit trails. Next steps are a proof-backed maximum protocol, scalable bidder storage, authenticated/timed lifecycle transitions, wallet writes, and a recorded private three-bidder settlement.
 
 ## Built with
 

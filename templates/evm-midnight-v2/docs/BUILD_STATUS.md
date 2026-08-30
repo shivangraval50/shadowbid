@@ -30,17 +30,16 @@ Last reviewed: 2026-08-30 (second pass, shadowbid/claude-settlement).
 
 ## Not complete
 
-- No coordinator process is running continuously in this environment (the CLI in item above is runnable but was not left running as a daemon) — it is invoked once per settlement decision, by design (an operator or an authenticated upstream system triggers it explicitly; it never polls or decides on its own).
-- `bun run test` (the full `packages/tests/run-tests.ts` orchestrated suite) now reaches **29 of 31** assertions passing (up from 0 reachable at the start of this pass — the suite could not get past `compile-evm-contracts-forge` before). The two remaining failures are pre-existing test/orchestration gaps unrelated to the settlement path:
-  - `ShadowBid browser output does not disclose private bid fields` — `packages/tests/run-tests.ts` runs `shadowBidPrivacyTest` (which fetches the frontend dev server) in Phase B, but the frontend is not built/started until Phase E. This is a test-ordering bug in the pre-existing suite structure; not fixed here because reordering test phases could have unaudited effects on Phases C/D.
-  - `ShadowBid configured logs do not disclose private bid fields` — requires `SHADOWBID_LOG_PATHS` to name real log files; nothing in this template writes such files, so there is nothing valid to point the variable at without fabricating a logging subsystem.
-- No coordinator-decision authorization layer beyond "holds the private key" exists (e.g., no multi-party signoff, no rate limiting, no decision audit log beyond the file store itself) — the coordinator CLI is a minimal reference implementation of the trust boundary already documented, not a hardened production service.
+- The coordinator CLI is a one-shot reference process, not a continuously polling service. It has no multi-party signoff, rate limiting, durable audit trail beyond the result file, or production key-management policy.
+- The UI is read-only: wallet-backed mint/list, create, commit, close, open, proving-status, and settlement writes are not implemented.
+- Compact does not compute a global maximum or produce a proof consumed directly by EVM. EVM does not directly verify a Midnight ZK winner-computation proof; winner/amount correctness remains a trusted coordinator claim.
+- No recorded private three-bidder 8/13/11 run through Midnight winner derivation, EffectStream transition, EVM settlement, and final NFT owner exists.
 
-Do not describe the repository as an end-to-end settlement demo, trustless bridge, or proof-backed auction. Winner/amount correctness is an authenticated (EIP-712, cryptographically verified against live Midnight ledger state) but still trusted coordinator claim, not a proof and not a computed result. The operational path — live Midnight reads, coordinator signing, batcher validation — is now wired and passes 29/31 orchestrated tests plus 45/45 focused unit tests; see docs/CLAUDE_SETTLEMENT_REPORT.md for the full account and exact commands.
+Do not describe the repository as an end-to-end settlement demo, trustless bridge, or proof-backed auction. EffectStream is deterministic indexing/read-model infrastructure, not settlement authority.
 
 ## Final validation superseding the stale status above — 2026-08-30
 
-The two test-infrastructure gaps listed above are fixed: browser privacy runs in Phase E with the live frontend, while the orchestrator captures stdout/stderr to an ephemeral per-run file supplied through `SHADOWBID_LOG_PATHS`. Hardhat Ignition is a direct exact dependency rather than a transient symlink.
+The former two test-infrastructure gaps are fixed: browser privacy runs in Phase E with the live frontend, while the orchestrator captures stdout/stderr to an ephemeral per-run file supplied through `SHADOWBID_LOG_PATHS`. Hardhat Ignition is a direct exact dependency rather than a transient symlink.
 
 The final complete `bun run test` rerun exits **0**: **35 core assertions plus 6 wallet/browser assertions pass (41 total checks)** across infrastructure, deployment, proving, database/API privacy, cross-chain state, Midnight property submission, frontend build, browser rendering, wallet-modal behavior, and fatal-JS checks. Checkpoint `8cb92fbe` aligns the legacy wallet test with the current unified ShadowBid wallet modal/auction registry.
 

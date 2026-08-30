@@ -1,18 +1,23 @@
-# Security
+# ShadowBid security
+
+> Current posture: component-level controls and an authenticated trusted-coordinator handoff are validated; this is not a production audit or trustless settlement protocol.
 
 ## Implemented controls
 
 - ERC-721 escrow accepts only the expected NFT/token in `onERC721Received`.
 - Reentrancy guards protect create, settle, cancel, and proceeds withdrawal.
-- Settlement uses EIP-712 typed data bound to the verifying contract and chain.
-- Settlement checks winner, exact `msg.value`, reserve, commitment, separately stored Midnight contract/network identifiers, result version, expiry, nonce, signer, and that the commit phase has ended.
+- EIP-712 settlement authorization is bound to the verifying contract, EVM chain, auction, winner, amount, commitment, Midnight contract/network, result version, expiry, and nonce.
+- Settlement enforces the commit/settlement windows, reserve, exact `msg.value`, valid winner, and configured signer.
 - Used settlement digests and per-auction nonces prevent replay.
-- The unauthenticated Compact result-publication circuit is removed and its batcher path fails closed.
-- Replay claims are canonical, size-limited, time-limited, durable, expiring, and idempotent for an identical envelope.
+- The unauthenticated Compact result-publication circuit does not exist; the batcher rejects missing/invalid authority state and remains fail-closed when not configured.
+- The live reader reads public Midnight ledger state directly, not the EffectStream projection/API/database.
 - Public source facts are append-only and the reducer is deterministic under duplicates/reordering.
+- Privacy tests verify that salts, openings, and losing amounts do not enter public API/database/browser/log surfaces.
 
 ## Security limits
 
-`settlementSigner` is trusted. The EVM contract does not verify a Midnight proof or state. The dev batcher fails closed because its authoritative reader is not wired. The pinned Compact stack has no reviewed contract-caller/capability or ledger-time primitive here, so lifecycle flags and public Compact ledger must never authorize settlement. Do not use the development private keys or treat this as production-ready.
+`settlementSigner` is trusted. Its signature proves authorization, not winner correctness. EVM does **not** directly verify a Midnight ZK winner-computation proof, and the Compact circuits do not calculate a global maximum. The coordinator’s out-of-band decision process needs multi-party approval, rate limiting, durable auditing, key protection, and a dedicated operational security review before use with real funds.
 
-See [`PRIVACY.md`](PRIVACY.md) and the review-owned [`SECURITY_REVIEW.md`](SECURITY_REVIEW.md).
+Compact lifecycle transitions are not independently authenticated/timed by a reviewed caller/capability primitive in this pinned stack. Do not treat public Midnight lifecycle fields or EffectStream state as settlement authority. The design is limited to three bidder slots and the UI has no wallet-backed auction/bid/settlement writes.
+
+See [`PRIVACY.md`](PRIVACY.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), and the historical findings in [`SECURITY_REVIEW.md`](SECURITY_REVIEW.md) and [`SOL_FINAL_REVIEW.md`](SOL_FINAL_REVIEW.md).

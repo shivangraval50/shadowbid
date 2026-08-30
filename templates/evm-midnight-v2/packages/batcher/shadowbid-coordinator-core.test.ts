@@ -39,6 +39,7 @@ function baseLedger(overrides: Partial<MidnightAuctionLedgerState> = {}, nowSeco
     settlement_deadline: BigInt(nowSeconds + 3600),
     commitment_0: commitments.bidder8, commitment_1: commitments.bidder13, commitment_2: commitments.bidder11,
     committed_0: true, committed_1: true, committed_2: true,
+    consumed_0: true, consumed_1: true, consumed_2: true,
     ...overrides,
   } as MidnightAuctionLedgerState;
 }
