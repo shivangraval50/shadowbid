@@ -21,12 +21,20 @@ export type ImpureCircuits<PS> = {
                bidder_0: Uint8Array,
                amount_0: bigint,
                salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  commit_bid_2(context: __compactRuntime.CircuitContext<PS>,
+               bidder_0: Uint8Array,
+               amount_0: bigint,
+               salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
   close_commitments(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
   open_and_consume_0(context: __compactRuntime.CircuitContext<PS>,
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
   open_and_consume_1(context: __compactRuntime.CircuitContext<PS>,
+                     bidder_0: Uint8Array,
+                     amount_0: bigint,
+                     salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  open_and_consume_2(context: __compactRuntime.CircuitContext<PS>,
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
@@ -56,12 +64,20 @@ export type ProvableCircuits<PS> = {
                bidder_0: Uint8Array,
                amount_0: bigint,
                salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  commit_bid_2(context: __compactRuntime.CircuitContext<PS>,
+               bidder_0: Uint8Array,
+               amount_0: bigint,
+               salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
   close_commitments(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
   open_and_consume_0(context: __compactRuntime.CircuitContext<PS>,
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
   open_and_consume_1(context: __compactRuntime.CircuitContext<PS>,
+                     bidder_0: Uint8Array,
+                     amount_0: bigint,
+                     salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  open_and_consume_2(context: __compactRuntime.CircuitContext<PS>,
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
@@ -94,12 +110,20 @@ export type Circuits<PS> = {
                bidder_0: Uint8Array,
                amount_0: bigint,
                salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  commit_bid_2(context: __compactRuntime.CircuitContext<PS>,
+               bidder_0: Uint8Array,
+               amount_0: bigint,
+               salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
   close_commitments(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
   open_and_consume_0(context: __compactRuntime.CircuitContext<PS>,
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
   open_and_consume_1(context: __compactRuntime.CircuitContext<PS>,
+                     bidder_0: Uint8Array,
+                     amount_0: bigint,
+                     salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  open_and_consume_2(context: __compactRuntime.CircuitContext<PS>,
                      bidder_0: Uint8Array,
                      amount_0: bigint,
                      salt_0: Uint8Array): Promise<__compactRuntime.CircuitResults<PS, []>>;
@@ -126,12 +150,16 @@ export type Ledger = {
   readonly commitment_count: bigint;
   readonly commitment_0: Uint8Array;
   readonly commitment_1: Uint8Array;
+  readonly commitment_2: Uint8Array;
   readonly committed_0: boolean;
   readonly committed_1: boolean;
+  readonly committed_2: boolean;
   readonly nullifier_0: Uint8Array;
   readonly nullifier_1: Uint8Array;
+  readonly nullifier_2: Uint8Array;
   readonly consumed_0: boolean;
   readonly consumed_1: boolean;
+  readonly consumed_2: boolean;
   readonly winner: Uint8Array;
   readonly winning_commitment: Uint8Array;
   readonly winning_amount: bigint;

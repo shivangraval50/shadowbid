@@ -15,15 +15,22 @@ export default {
     // `**/src/managed`, so midnight-contract:deploy (which imports
     // ./managed/contract/index.js) needs it regenerated first. Mirrors zswap-da.
     {
-      name: "compact-build",
-      description: "Compile Compact contract (counter)",
+      name: "compact-counter-build",
+      description: "Compile reference Counter Compact contract",
       cwd: path.join(root, "packages/contracts-midnight/contract-round-value"),
+      args: ["run", "compact"],
+      waitToExit: true,
+    },
+    {
+      name: "compact-shadowbid-build",
+      description: "Compile ShadowBid Compact contract",
+      cwd: path.join(root, "packages/contracts-midnight/contract-shadowbid"),
       args: ["run", "compact"],
       waitToExit: true,
     },
     ...launchMidnight("@evm-midnight/contracts-midnight", { cwd: path.join(root, "packages/contracts-midnight") }, {
       env: { MIDNIGHT_STORAGE_PASSWORD: "YourPasswordMy1!" },
-      dependsOn: ["compact-build"],
+      dependsOn: ["compact-counter-build", "compact-shadowbid-build"],
     }),
 
     {

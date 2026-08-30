@@ -4,8 +4,8 @@ Last reviewed: 2026-08-29.
 
 Start from [`SETUP_STATUS.md`](SETUP_STATUS.md), whose reference-stack facts are preserved. Documentation audit completed against the merged ShadowBid contracts, Compact source, EffectStream wiring, batcher, API, frontend, and tests.
 
-Completed: judge-ready README and docs set updated; implemented guarantees and missing wiring called out; review-owned `SECURITY_REVIEW.md` left unchanged.
+Completed: ShadowBid now has three Compact bid slots, regenerated bindings, dual Counter/ShadowBid local deployment wiring, and a Midnight primitive that joins the canonical public `Bytes<32>` auction id to EVM facts. The dashboard is read-only without simulated write/proof controls.
 
-Known blockers: two-slot Compact implementation versus three-bid test; local sync still points at `contract-round-value`; frontend writes are disabled; authoritative settlement reader is fail-closed.
+Known blockers: the authoritative settlement reader remains fail-closed; the local host denies Compact's proving-key subprocess, so live proof/settlement validation requires a proof-capable host. The workspace dependency symlink is incomplete and cannot be repaired by `bun install --frozen-lockfile` here (EPERM).
 
-Next action: engineering should fix the Compact slot mismatch and wire the ShadowBid deployment/config before claiming an end-to-end demo. Then run `bun run build:midnight`, `bun run build:evm`, frontend build, and `bun run test`.
+Next action: provide a finalized EVM/Midnight/coordinator authority reader, validate a real proof and settlement on a host where `zkir` can generate keys, then rerun the full build/test suite with a writable complete dependency install.

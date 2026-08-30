@@ -93,8 +93,12 @@ export class ShadowBidMidnightPrimitive extends Primitive<any, typeof shadowBidE
 
   *getPayload(_height: EffectstreamBlockNumber, tx: FlattenSyncProtocolIOFor<ConfigSyncProtocolType.MIDNIGHT_PARALLEL>): StateUpdateStream<any> {
     const payload = JSON.parse(JSON.stringify(tx.output.payload, (_key, value) => typeof value === "bigint" ? value.toString() : value));
-    const auctionId = payload.auctionId ?? payload.auction_id;
-    const commitment = payload.commitment;
+    // The generic Midnight primitive exposes the post-transaction ledger. A
+    // Compact auction id is a Bytes<32> encoding of the EVM uint256 id; turn
+    // that canonical unsigned encoding back into the same decimal key used by
+    // EVM event facts. No opening fields are copied into the public fact.
+    const auctionId = canonicalAuctionId(payload.auctionId ?? payload.auction_id);
+    const commitment = payload.commitment ?? commitmentForLatestSlot(payload);
     if (auctionId == null || typeof commitment !== "string" || !commitment) return { isBatched: false, data: [] };
     const index = tx.syncProtocol.logIndex ?? tx.syncProtocol.transactionIndex ?? 0;
     const fact = {
@@ -111,4 +115,20 @@ export class ShadowBidMidnightPrimitive extends Primitive<any, typeof shadowBidE
   getConfig(): any {
     return { name: this.instanceName, type: this.internalTypeName, startBlockHeight: this.startBlockHeight, contractAddress: this.contractAddress, stateMachinePrefix: this.stateMachinePrefix, networkId: this.networkId, contract: this.contract };
   }
+}
+
+function canonicalAuctionId(value: unknown): string | null {
+  if (typeof value === "bigint" || typeof value === "number") return String(value);
+  if (typeof value !== "string" || !value) return null;
+  if (/^(0|[1-9][0-9]*)$/.test(value)) return value;
+  if (!/^0x[0-9a-fA-F]{1,64}$/.test(value)) return null;
+  return BigInt(value).toString();
+}
+
+function commitmentForLatestSlot(payload: Record<string, unknown>): unknown {
+  const count = Number(payload.commitment_count);
+  if (!Number.isSafeInteger(count) || count < 1 || count > 3) return undefined;
+  const slot = count - 1;
+  if (payload[`committed_${slot}`] !== true) return undefined;
+  return payload[`commitment_${slot}`];
 }

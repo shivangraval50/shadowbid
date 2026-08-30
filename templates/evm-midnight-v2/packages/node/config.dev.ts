@@ -2,6 +2,7 @@ import { contractAddressesEvmMain } from "@evm-midnight/contracts-evm";
 import { readMidnightContract } from "@effectstream/midnight-contracts/read-contract";
 import { midnightNetworkConfig } from "@effectstream/midnight-contracts/midnight-env";
 import * as CounterContract from "@evm-midnight/midnight-contract/contract";
+import * as ShadowBidContract from "@evm-midnight/shadowbid-midnight-contract/contract";
 
 import {
   ConfigBuilder,
@@ -198,11 +199,11 @@ export const config = new ConfigBuilder()
           type: "Midnight:ShadowBidPublic",
           startBlockHeight: 1,
           contractAddress: readMidnightContract(
-            "contract-round-value",
+            "contract-shadowbid",
             { networkId: midnightNetworkConfig.id },
           ).contractAddress,
           stateMachinePrefix: "shadowBidMidnight",
-          contract: { ledger: CounterContract.ledger },
+          contract: { ledger: ShadowBidContract.ledger },
           networkId: midnightNetworkConfig.id,
         } as any),
       )

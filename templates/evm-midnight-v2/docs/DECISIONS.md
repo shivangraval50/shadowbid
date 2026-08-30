@@ -12,6 +12,10 @@ ShadowBid source facts are append-only observations. The reducer is replay/order
 
 `batcher.dev.ts` supplies an authoritative reader returning `null`, so the strict ShadowBid adapter rejects settlement requests until deployment wires a real finalized-state reader.
 
-## 2026-08-29 — Documentation reflects current capability
+## 2026-08-29 — Three fixed Compact slots
 
-The current Compact contract has two commitment slots. The three-bid test is retained as a failing acceptance signal; documentation must not claim three bidder support.
+The Compact contract now provides slots 0, 1, and 2, with per-slot consume/nullifier paths. This meets the existing deterministic three-bid capability test; it is not an unbounded bidder design.
+
+## 2026-08-29 — Compact auction IDs use the EVM uint256 encoding
+
+`register_auction` must receive the EVM auction id as its zero-left-padded unsigned `Bytes<32>` representation. The Midnight primitive converts that public representation back to the decimal EVM event key before reducing facts. This is an indexing convention, not proof of a bridge.
