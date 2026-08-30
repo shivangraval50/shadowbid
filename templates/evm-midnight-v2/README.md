@@ -91,6 +91,6 @@ docs/                                           architecture, security, demo, su
 
 ## Judge demo and honest limitations
 
-Use [`docs/DEMO.md`](docs/DEMO.md) for the deterministic two-minute read-only/source-backed demo. The requested seller → A=8 → B=13 → C=11 → close → private winner derivation → settlement sequence is a **pending integration target**, not an executable UI path in this checkout. Do not present a fabricated transaction or claim that Midnight computed the winner.
+Use [`docs/DEMO.md`](docs/DEMO.md) for the deterministic two-minute demo. The seller → A=8 → B=13 → C=11 → close → settlement sequence **has been executed and recorded** via the `live-three-bidder.ts` harness, and also runs inside `bun run test`; it is **not** an executable UI path in this checkout, because the dashboard has no write controls. Do not present a fabricated transaction or claim that Midnight computed the winner — the coordinator selected it.
 
-Future work is proof-backed winner selection with deterministic tie rules and EVM-address binding, authenticated/timed Compact lifecycle transitions, scalable bidder storage, wallet-backed writes, and a proof-capable three-bidder integration run. See [`docs/SUBMISSION_READY.md`](docs/SUBMISSION_READY.md).
+Future work is proof-backed winner selection with deterministic tie rules and EVM-address binding, authenticated/timed Compact lifecycle transitions, scalable bidder storage, wallet-backed UI writes, and production coordinator hardening. See [`docs/SUBMISSION_READY.md`](docs/SUBMISSION_READY.md).
